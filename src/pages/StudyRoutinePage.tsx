@@ -8,40 +8,40 @@ const StudyRoutinePage: React.FC = () => {
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 
   // Mock data
-  const subjects = ["Mathematics", "Physics", "Chemistry", "Biology", "History", "Literature", "Computer Science", "Languages"];
+  const subjects = ["Matematica", "Fisica", "Chimica", "Biologia", "Storia", "Letteratura", "Informatica", "Lingue"];
 
   const routines = [
     {
       id: 1,
-      title: "Morning Mathematics Review",
-      time: "08:00 AM - 09:30 AM",
-      subject: "Mathematics",
-      description: "Review calculus concepts and practice problems",
-      days: ["Monday", "Wednesday", "Friday"],
+      title: "Revisione Matematica Mattutina",
+      time: "08:00 - 09:30",
+      subject: "Matematica",
+      description: "Rivedi concetti di calcolo e pratica esercizi",
+      days: ["Lunedì", "Mercoledì", "Venerdì"],
     },
     {
       id: 2,
-      title: "Physics Problem Set",
-      time: "10:00 AM - 11:30 AM",
-      subject: "Physics",
-      description: "Work through problem set and review lecture notes",
-      days: ["Tuesday", "Thursday"],
+      title: "Esercizi di Fisica",
+      time: "10:00 - 11:30",
+      subject: "Fisica",
+      description: "Completa esercizi e rivedi appunti delle lezioni",
+      days: ["Martedì", "Giovedì"],
     },
     {
       id: 3,
-      title: "History Essay Research",
-      time: "02:00 PM - 03:30 PM",
-      subject: "History",
-      description: "Research and outline essay on Renaissance period",
-      days: ["Monday", "Wednesday"],
+      title: "Ricerca per Saggio di Storia",
+      time: "14:00 - 15:30",
+      subject: "Storia",
+      description: "Ricerca e crea una bozza sul periodo del Rinascimento",
+      days: ["Lunedì", "Mercoledì"],
     },
     {
       id: 4,
-      title: "Chemistry Lab Preparation",
-      time: "04:00 PM - 05:00 PM",
-      subject: "Chemistry",
-      description: "Review lab procedures and safety protocols",
-      days: ["Tuesday"],
+      title: "Preparazione per il Laboratorio di Chimica",
+      time: "16:00 - 17:00",
+      subject: "Chimica",
+      description: "Rivedi procedure di laboratorio e protocolli di sicurezza",
+      days: ["Martedì"],
     },
   ];
 
@@ -119,25 +119,25 @@ const StudyRoutinePage: React.FC = () => {
     <div className="container-custom py-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Study Routines</h1>
-          <p className="text-gray-600 mt-1">Create and manage your personalized study schedule</p>
+          <h1 className="text-3xl font-bold">Routine di Studio</h1>
+          <p className="text-gray-600 mt-1">Crea e gestisci il tuo programma di studio personalizzato</p>
         </div>
 
         <div className="flex space-x-3 mt-4 md:mt-0">
           <button className="btn btn-outline" onClick={() => setShowFilterMenu(!showFilterMenu)}>
             <Filter className="mr-2 h-4 w-4" />
-            Filter
+            Filtra
           </button>
           <button className="btn btn-primary" onClick={() => setIsCreatingRoutine(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            New Routine
+            Nuova Routine
           </button>
         </div>
       </div>
 
       {showFilterMenu && (
         <div className="bg-white p-4 rounded-lg shadow-md mb-6 animate-fade-in">
-          <h2 className="font-medium mb-3">Filter by Subject</h2>
+          <h2 className="font-medium mb-3">Filtra per Materia</h2>
           <div className="flex flex-wrap gap-2">
             {subjects.map((subject) => (
               <button
@@ -160,7 +160,7 @@ const StudyRoutinePage: React.FC = () => {
         <div className="md:col-span-2">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Study Calendar</h2>
+              <h2 className="text-lg font-semibold">Calendario Studio</h2>
               <div className="flex items-center space-x-2">
                 <button onClick={() => navigateMonth("prev")} className="p-1 rounded-full hover:bg-gray-100">
                   <ChevronLeft className="h-5 w-5 text-gray-600" />
@@ -174,7 +174,7 @@ const StudyRoutinePage: React.FC = () => {
 
             <div className="p-4">
               <div className="grid grid-cols-7 gap-1">
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                {["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"].map((day) => (
                   <div key={day} className="text-center text-xs font-medium text-gray-500 py-2">
                     {day}
                   </div>
@@ -216,7 +216,7 @@ const StudyRoutinePage: React.FC = () => {
         <div>
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="text-lg font-semibold">Your Routines</h2>
+              <h2 className="text-lg font-semibold">Le tue Routines</h2>
             </div>
             <div className="divide-y divide-gray-100">
               {filteredRoutines.length > 0 ? (
@@ -252,10 +252,10 @@ const StudyRoutinePage: React.FC = () => {
                 ))
               ) : (
                 <div className="p-6 text-center">
-                  <p className="text-gray-500">No routines match your filter criteria.</p>
+                  <p className="text-gray-500">Nessuna routine corrisponde ai criteri di filtro.</p>
                   {selectedSubjects.length > 0 && (
                     <button className="mt-2 text-primary-600 hover:text-primary-700 text-sm" onClick={() => setSelectedSubjects([])}>
-                      Clear Filters
+                      Pulisci Filtri
                     </button>
                   )}
                 </div>
@@ -270,7 +270,7 @@ const StudyRoutinePage: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 animate-slide-up">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-              <h2 className="text-lg font-bold">Create New Study Routine</h2>
+              <h2 className="text-lg font-bold">Crea una Nuova Routine di Studio</h2>
               <button onClick={() => setIsCreatingRoutine(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="h-5 w-5" />
               </button>
@@ -280,23 +280,23 @@ const StudyRoutinePage: React.FC = () => {
               <form>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Routine Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nome Routine</label>
                     <input type="text" placeholder="e.g., Morning Mathematics Review" className="input" />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Ora di Inizio</label>
                       <input type="time" className="input" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Durata (minuti)</label>
                       <input type="number" min="15" step="15" placeholder="60" className="input" />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Materie</label>
                     <select className="input">
                       <option value="">Select a subject</option>
                       {subjects.map((subject) => (
@@ -308,14 +308,14 @@ const StudyRoutinePage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
-                    <textarea rows={3} placeholder="What will you focus on during this study session?" className="input"></textarea>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Descrizione (opzionale)</label>
+                    <textarea rows={3} placeholder="Su cosa ti concentrerai durante questa sessione di studio?" className="input"></textarea>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">Repeat on days</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">Ripeti nei giorni</label>
                     <div className="flex flex-wrap gap-2">
-                      {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => (
+                      {["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"].map((day) => (
                         <button key={day} type="button" className="px-3 py-1.5 rounded-full text-sm bg-gray-100 text-gray-700 hover:bg-gray-200">
                           {day.substring(0, 3)}
                         </button>
@@ -325,11 +325,11 @@ const StudyRoutinePage: React.FC = () => {
 
                   <div className="flex justify-end space-x-3 pt-4">
                     <button type="button" className="btn btn-outline" onClick={() => setIsCreatingRoutine(false)}>
-                      Cancel
+                      Cancella
                     </button>
                     <button type="button" className="btn btn-primary">
                       <Check className="mr-2 h-4 w-4" />
-                      Create Routine
+                      Crea Routine
                     </button>
                   </div>
                 </div>

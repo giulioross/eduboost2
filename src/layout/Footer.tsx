@@ -14,7 +14,7 @@ const Footer: React.FC = () => {
               </span>
               <span className="text-lg font-bold text-gray-900">EduBoost</span>
             </div>
-            <p className="text-sm text-gray-600 mb-6">Boost your learning potential with smart study tools and techniques.</p>
+            <p className="text-sm text-gray-600 mb-6">Aumenta il tuo potenziale di approfondimento con strumenti e tecniche di studio intelligenti</p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-primary-600 transition-colors">
                 <Twitter size={20} />
@@ -38,17 +38,17 @@ const Footer: React.FC = () => {
               </li>
               <li>
                 <Link to="/mental-maps" className="text-sm text-gray-600 hover:text-primary-600 transition-colors">
-                  Mental Maps
+                  Mappe Mentali
                 </Link>
               </li>
               <li>
                 <Link to="/quizzes" className="text-sm text-gray-600 hover:text-primary-600 transition-colors">
-                  Smart Quizzes
+                  Quiz Intelligenti
                 </Link>
               </li>
               <li>
                 <Link to="/focus" className="text-sm text-gray-600 hover:text-primary-600 transition-colors">
-                  Focus Mode
+                  Modalità Focus
                 </Link>
               </li>
             </ul>
@@ -59,7 +59,7 @@ const Footer: React.FC = () => {
             <ul className="space-y-3">
               <li>
                 <a href="#" className="text-sm text-gray-600 hover:text-primary-600 transition-colors">
-                  Study Tips
+                  Documentation
                 </a>
               </li>
               <li>
@@ -74,7 +74,7 @@ const Footer: React.FC = () => {
               </li>
               <li>
                 <a href="#" className="text-sm text-gray-600 hover:text-primary-600 transition-colors">
-                  Support
+                  Supporto
                 </a>
               </li>
             </ul>
@@ -90,7 +90,7 @@ const Footer: React.FC = () => {
               </li>
               <li>
                 <a href="#" className="text-sm text-gray-600 hover:text-primary-600 transition-colors">
-                  Careers
+                  Carriere
                 </a>
               </li>
               <li>

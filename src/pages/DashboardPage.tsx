@@ -23,17 +23,17 @@ const DashboardPage: React.FC = () => {
         <div className="container-custom py-10">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Welcome back, Alex!</h1>
-              <p className="text-primary-100">Let's continue your learning journey</p>
+              <h1 className="text-3xl font-bold mb-2">Bentornato, Alex!</h1>
+              <p className="text-primary-100">Continuiamo il tuo percorso di apprendimento</p>
             </div>
             <div className="mt-4 md:mt-0 flex space-x-3">
               <button className="btn bg-white text-primary-700 hover:bg-gray-100">
                 <Calendar className="mr-2 h-4 w-4" />
-                Plan Study Session
+                Piano di sessione di studio
               </button>
               <button className="btn bg-primary-700 text-white hover:bg-primary-800">
                 <Clock className="mr-2 h-4 w-4" />
-                Enter Focus Mode
+                Entra nella modalità Focus
               </button>
             </div>
           </div>
@@ -62,7 +62,7 @@ const DashboardPage: React.FC = () => {
               <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
                 <h2 className="text-lg font-semibold">Upcoming Study Sessions</h2>
                 <Link to="/routines" className="text-sm text-primary-600 hover:text-primary-700 flex items-center">
-                  View all <ChevronRight className="h-4 w-4 ml-1" />
+                  Vedi tutto <ChevronRight className="h-4 w-4 ml-1" />
                 </Link>
               </div>
               <div className="divide-y divide-gray-100">
@@ -77,7 +77,7 @@ const DashboardPage: React.FC = () => {
                     </div>
                     <div className="flex items-center">
                       <span className="text-sm text-gray-500 mr-4">{session.duration}</span>
-                      <button className="btn btn-outline py-1 px-3 text-sm">Start</button>
+                      <button className="btn btn-outline py-1 px-3 text-sm">Comincia</button>
                     </div>
                   </div>
                 ))}
@@ -87,27 +87,27 @@ const DashboardPage: React.FC = () => {
             {/* Recent Activity */}
             <div className="card">
               <div className="px-6 py-4 border-b border-gray-100">
-                <h2 className="text-lg font-semibold">Recent Activity</h2>
+                <h2 className="text-lg font-semibold">Attività Recenti</h2>
               </div>
               <div className="px-6 py-4">
                 <div className="space-y-4">
                   <ActivityItem
                     icon={<BookOpen className="h-5 w-5 text-purple-500" />}
-                    title="Completed Quiz: Organic Chemistry Basics"
-                    time="Yesterday at 4:30 PM"
+                    title="Quiz Completato: Fondamenti di Matematica"
+                    time="Ieri alle 4:30 PM"
                     detail="Score: 85%"
                   />
                   <ActivityItem
                     icon={<Brain className="h-5 w-5 text-blue-500" />}
-                    title="Created Mental Map: Spanish Verb Conjugation"
-                    time="Yesterday at 2:15 PM"
-                    detail="12 connections"
+                    title="Nuova Mappa Mentale Creata: Teorema di Pitagora"
+                    time="Ieri alle 2:15 PM"
+                    detail="12 connessioni"
                   />
                   <ActivityItem
                     icon={<Clock className="h-5 w-5 text-green-500" />}
-                    title="Completed Focus Session: Literature Review"
-                    time="2 days ago at 7:00 PM"
-                    detail="90 minutes"
+                    title="Sessione di Studio Iniziata: Fisica Avanzata"
+                    time="2 giorni fa alle 7:00 PM"
+                    detail="90 minuti"
                   />
                 </div>
               </div>
@@ -119,13 +119,13 @@ const DashboardPage: React.FC = () => {
             {/* Weekly Statistics */}
             <div className="card">
               <div className="px-6 py-4 border-b border-gray-100">
-                <h2 className="text-lg font-semibold">Weekly Statistics</h2>
+                <h2 className="text-lg font-semibold">Statistiche Settimanali</h2>
               </div>
               <div className="p-6">
                 <div className="space-y-6">
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-sm font-medium text-gray-700">Focus Time by Subject</h3>
+                      <h3 className="text-sm font-medium text-gray-700">Tempodi messa a fuoco per argomento</h3>
                     </div>
                     <div className="h-48 flex items-center justify-center">
                       <BarChart3 className="h-32 w-32 text-gray-300" />
@@ -133,8 +133,8 @@ const DashboardPage: React.FC = () => {
                   </div>
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-sm font-medium text-gray-700">Productivity Score</h3>
-                      <span className="text-sm text-emerald-600 font-medium">+12% from last week</span>
+                      <h3 className="text-sm font-medium text-gray-700">Punteggio produttività</h3>
+                      <span className="text-sm text-emerald-600 font-medium">+12% dall ultima settimana</span>
                     </div>
                     <div className="h-5 bg-gray-100 rounded-full">
                       <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full" style={{ width: "78%" }}></div>
@@ -159,13 +159,16 @@ const DashboardPage: React.FC = () => {
                 <div className="space-y-4">
                   <TipCard
                     title="Use the Pomodoro Technique"
-                    description="Try studying in 25-minute intervals with 5-minute breaks to maintain focus."
+                    description="Prova a studiare per 25 minuti e poi fare una pausa di 5 minuti. Ripeti!"
                   />
                   <TipCard
-                    title="Create Mental Associations"
-                    description="Connect new information to concepts you already understand for better retention."
+                    title="Crea associazioni mentali"
+                    description="Collegare nuove informazioni a quelle già note può migliorare la memorizzazione."
                   />
-                  <TipCard title="Review Before Bedtime" description="Light review before sleep can help with memory consolidation." />
+                  <TipCard
+                    title="Ripasso prima di dormire"
+                    description="Una breve revisione prima di andare a dormire può aiutare a consolidare la memoria."
+                  />
                 </div>
               </div>
             </div>
@@ -173,7 +176,7 @@ const DashboardPage: React.FC = () => {
             {/* Reminders */}
             <div className="card">
               <div className="px-6 py-4 border-b border-gray-100">
-                <h2 className="text-lg font-semibold">Upcoming Deadlines</h2>
+                <h2 className="text-lg font-semibold">Prossime Scadenze</h2>
               </div>
               <div className="divide-y divide-gray-100">
                 <ReminderItem title="Physics Assignment" date="Tomorrow" type="Assignment" urgent />
