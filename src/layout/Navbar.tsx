@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { BookOpen, Brain, Calendar, ChevronDown, ClipboardList, Home, Menu, X, User, Zap } from "lucide-react";
 
 const Navbar: React.FC = () => {
+  const user = { role: "ADMIN" }; // Replace this with actual user context or state
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -29,7 +30,14 @@ const Navbar: React.FC = () => {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          {/* Replace with actual user role check */}
+          {user?.role === "ADMIN" && (
+            <Link to="/quiz-admin" className="text-sm text-gray-600 hover:text-primary-600">
+              Gestione Quiz
+            </Link>
+          )}
+
+          <div className="hidden md:flex items-center space-x-4">
             {menuItems.map((item) => (
               <Link
                 key={item.path}

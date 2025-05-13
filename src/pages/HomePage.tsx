@@ -52,38 +52,38 @@ const HomePage: React.FC = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             <FeatureCard
               icon={<Calendar className="h-10 w-10 text-primary-600" />}
-              title="Smart Study Routines"
-              description="Create personalized study schedules based on your goals, subjects, and optimal study times."
+              title="Routine di Studio Intelligenti"
+              description="Crea programmi di studio personalizzati basati sui tuoi obiettivi, materie e tempi di studio ottimali."
               delay={0.1}
             />
             <FeatureCard
               icon={<Brain className="h-10 w-10 text-primary-600" />}
-              title="Mental Maps"
-              description="Build interactive mind maps to visualize connections between concepts and enhance retention."
+              title="Mappe Mentali"
+              description="Costruisci mappe mentali interattive per visualizzare le connessioni tra i concetti e migliorare la memorizzazione."
               delay={0.2}
             />
             <FeatureCard
               icon={<BookOpen className="h-10 w-10 text-primary-600" />}
-              title="Adaptive Quizzes"
-              description="Test your knowledge with AI-generated questions that focus on your weak areas."
+              title="Quiz Adattivi"
+              description="Metti alla prova le tue conoscenze con domande generate dall'IA che si concentrano sulle tue aree deboli."
               delay={0.3}
             />
             <FeatureCard
               icon={<Clock className="h-10 w-10 text-primary-600" />}
-              title="Focus Mode"
-              description="Block distractions and stay motivated with timed study sessions and incentives."
+              title="Modalità Focus"
+              description="Blocca le distrazioni e rimani motivato con sessioni di studio temporizzate e incentivi."
               delay={0.4}
             />
             <FeatureCard
               icon={<TrendingUp className="h-10 w-10 text-primary-600" />}
-              title="Progress Analytics"
-              description="Track your study habits, quiz performance, and knowledge growth over time."
+              title="Analisi dei Progressi"
+              description="Monitora le tue abitudini di studio, le prestazioni nei quiz e la crescita delle conoscenze nel tempo."
               delay={0.5}
             />
             <FeatureCard
               icon={<Target className="h-10 w-10 text-primary-600" />}
-              title="Study Tips & Techniques"
-              description="Get personalized recommendations for study methods based on your learning style."
+              title="Consigli e Tecniche di Studio"
+              description="Ricevi raccomandazioni personalizzate sui metodi di studio in base al tuo stile di apprendimento."
               delay={0.6}
             />
           </div>

@@ -1,285 +1,116 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
 import { Calendar, BookOpen, Brain, Clock, Award, TrendingUp, Bell, BarChart3, CheckCircle2, ChevronRight } from "lucide-react";
+import * as api from "../services/api";
 
 const DashboardPage: React.FC = () => {
-  // Mock data
-  const upcomingSessions = [
-    { id: 1, title: "Calculus Review", time: "Today, 3:00 PM", duration: "45 min", subject: "Mathematics" },
-    { id: 2, title: "History Essay Research", time: "Today, 5:00 PM", duration: "60 min", subject: "History" },
-    { id: 3, title: "Physics Problem Set", time: "Tomorrow, 10:00 AM", duration: "90 min", subject: "Physics" },
-  ];
+  const [upcomingSessions, setUpcomingSessions] = useState([]);
+  const [weeklyStats, setWeeklyStats] = useState<any>(null);
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [reminders, setReminders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const weeklyProgress = {
-    completed: 8,
-    total: 12,
-    percentage: 67,
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const sessions = await api.getUpcomingSessions();
+        const stats = await api.getWeeklyStats();
+        const activities = await api.getRecentActivities();
+        const remindersData = await api.getReminders();
+
+        setUpcomingSessions(sessions);
+        setWeeklyStats(stats);
+        setRecentActivities(activities);
+        setReminders(remindersData);
+      } catch (err) {
+        console.error("Errore nel caricamento dei dati:", err);
+        setError("Errore nel caricamento dei dati");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) return <p>Caricamento...</p>;
+  if (error) return <p>{error}</p>;
 
   return (
-    <div className="pb-10">
-      {/* Dashboard Header */}
-      <div className="bg-primary-600 text-white">
-        <div className="container-custom py-10">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Bentornato, Alex!</h1>
-              <p className="text-primary-100">Continuiamo il tuo percorso di apprendimento</p>
+    <div className="container mx-auto py-8">
+      {/* Prossime Sessioni */}
+      <section className="mb-8">
+        <h2 className="text-xl font-bold mb-4">Prossime Sessioni</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {upcomingSessions.map((session: any) => (
+            <div key={session.id} className="card p-4">
+              <h3 className="font-medium text-lg">{session.title}</h3>
+              <p className="text-sm text-gray-500">{session.time}</p>
             </div>
-            <div className="mt-4 md:mt-0 flex space-x-3">
-              <button className="btn bg-white text-primary-700 hover:bg-gray-100">
-                <Calendar className="mr-2 h-4 w-4" />
-                Piano di sessione di studio
-              </button>
-              <button className="btn bg-primary-700 text-white hover:bg-primary-800">
-                <Clock className="mr-2 h-4 w-4" />
-                Entra nella modalità Focus
-              </button>
-            </div>
-          </div>
+          ))}
         </div>
-      </div>
+      </section>
 
-      {/* Dashboard Content */}
-      <div className="container-custom pt-8">
-        <div className="grid md:grid-cols-3 gap-6">
-          {/* Progress Summary */}
-          <div className="md:col-span-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-              <ProgressCard
-                title="Weekly Goal"
-                value={`${weeklyProgress.completed}/${weeklyProgress.total}`}
-                label="Study Sessions"
-                icon={<CheckCircle2 className="h-5 w-5 text-primary-600" />}
-                percentage={weeklyProgress.percentage}
-              />
-              <ProgressCard title="Streak" value="7" label="Days" icon={<Award className="h-5 w-5 text-amber-500" />} />
-              <ProgressCard title="Focus Time" value="14.5" label="Hours this week" icon={<Clock className="h-5 w-5 text-emerald-500" />} />
-            </div>
-
-            {/* Upcoming Sessions */}
-            <div className="card mb-6">
-              <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Upcoming Study Sessions</h2>
-                <Link to="/routines" className="text-sm text-primary-600 hover:text-primary-700 flex items-center">
-                  Vedi tutto <ChevronRight className="h-4 w-4 ml-1" />
-                </Link>
+      {/* Statistiche Settimanali */}
+      <section className="mb-8">
+        <h2 className="text-xl font-bold mb-4">Statistiche Settimanali</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {weeklyStats &&
+            Object.keys(weeklyStats).map((key) => (
+              <div key={key} className="card p-4">
+                <h3 className="font-medium text-lg">{key}</h3>
+                <p className="text-2xl font-bold">{weeklyStats[key]}</p>
               </div>
-              <div className="divide-y divide-gray-100">
-                {upcomingSessions.map((session) => (
-                  <div key={session.id} className="px-6 py-4 flex justify-between items-center hover:bg-gray-50 transition-colors">
-                    <div>
-                      <h3 className="font-medium">{session.title}</h3>
-                      <div className="flex items-center mt-1">
-                        <span className="text-sm text-gray-500 mr-4">{session.time}</span>
-                        <span className="text-xs bg-primary-50 text-primary-700 px-2 py-1 rounded-full">{session.subject}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="text-sm text-gray-500 mr-4">{session.duration}</span>
-                      <button className="btn btn-outline py-1 px-3 text-sm">Comincia</button>
-                    </div>
-                  </div>
-                ))}
+            ))}
+        </div>
+      </section>
+
+      {/* Attività Recenti */}
+      <section className="mb-8">
+        <h2 className="text-xl font-bold mb-4">Attività Recenti</h2>
+        <div className="space-y-4">
+          {recentActivities.map((activity: any) => (
+            <div key={activity.id} className="flex items-center">
+              <div className="mr-4">
+                <BarChart3 className="h-6 w-6 text-primary-500" />
+              </div>
+              <div>
+                <h3 className="font-medium">{activity.title}</h3>
+                <p className="text-sm text-gray-500">{activity.time}</p>
               </div>
             </div>
+          ))}
+        </div>
+      </section>
 
-            {/* Recent Activity */}
-            <div className="card">
-              <div className="px-6 py-4 border-b border-gray-100">
-                <h2 className="text-lg font-semibold">Attività Recenti</h2>
-              </div>
-              <div className="px-6 py-4">
-                <div className="space-y-4">
-                  <ActivityItem
-                    icon={<BookOpen className="h-5 w-5 text-purple-500" />}
-                    title="Quiz Completato: Fondamenti di Matematica"
-                    time="Ieri alle 4:30 PM"
-                    detail="Score: 85%"
-                  />
-                  <ActivityItem
-                    icon={<Brain className="h-5 w-5 text-blue-500" />}
-                    title="Nuova Mappa Mentale Creata: Teorema di Pitagora"
-                    time="Ieri alle 2:15 PM"
-                    detail="12 connessioni"
-                  />
-                  <ActivityItem
-                    icon={<Clock className="h-5 w-5 text-green-500" />}
-                    title="Sessione di Studio Iniziata: Fisica Avanzata"
-                    time="2 giorni fa alle 7:00 PM"
-                    detail="90 minuti"
-                  />
+      {/* Promemoria */}
+      <section>
+        <h2 className="text-xl font-bold mb-4">Promemoria</h2>
+        <div className="space-y-4">
+          {reminders.map((reminder: any) => (
+            <div key={reminder.id} className="px-6 py-4 flex justify-between items-center hover:bg-gray-50 transition-colors">
+              <div>
+                <div className="flex items-center">
+                  <h3 className="font-medium">{reminder.title}</h3>
+                  {reminder.urgent && <span className="ml-2 px-2 py-0.5 text-xs bg-red-100 text-red-800 rounded-full">Urgente</span>}
                 </div>
+                <p className="text-sm text-gray-500 mt-1">{reminder.date}</p>
               </div>
+              <span
+                className={`text-xs px-2 py-1 rounded-full ${
+                  reminder.type === "Exam"
+                    ? "bg-red-50 text-red-700"
+                    : reminder.type === "Assignment"
+                    ? "bg-blue-50 text-blue-700"
+                    : "bg-purple-50 text-purple-700"
+                }`}>
+                {reminder.type}
+              </span>
             </div>
-          </div>
-
-          {/* Sidebar Content */}
-          <div className="space-y-6">
-            {/* Weekly Statistics */}
-            <div className="card">
-              <div className="px-6 py-4 border-b border-gray-100">
-                <h2 className="text-lg font-semibold">Statistiche Settimanali</h2>
-              </div>
-              <div className="p-6">
-                <div className="space-y-6">
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-sm font-medium text-gray-700">Tempodi messa a fuoco per argomento</h3>
-                    </div>
-                    <div className="h-48 flex items-center justify-center">
-                      <BarChart3 className="h-32 w-32 text-gray-300" />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-sm font-medium text-gray-700">Punteggio produttività</h3>
-                      <span className="text-sm text-emerald-600 font-medium">+12% dall ultima settimana</span>
-                    </div>
-                    <div className="h-5 bg-gray-100 rounded-full">
-                      <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full" style={{ width: "78%" }}></div>
-                    </div>
-                    <div className="flex justify-between mt-2">
-                      <span className="text-xs text-gray-500">0%</span>
-                      <span className="text-xs text-gray-500">78%</span>
-                      <span className="text-xs text-gray-500">100%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Study Tips */}
-            <div className="card">
-              <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Study Tips</h2>
-                <button className="text-sm text-primary-600 hover:text-primary-700">Refresh</button>
-              </div>
-              <div className="p-6">
-                <div className="space-y-4">
-                  <TipCard
-                    title="Use the Pomodoro Technique"
-                    description="Prova a studiare per 25 minuti e poi fare una pausa di 5 minuti. Ripeti!"
-                  />
-                  <TipCard
-                    title="Crea associazioni mentali"
-                    description="Collegare nuove informazioni a quelle già note può migliorare la memorizzazione."
-                  />
-                  <TipCard
-                    title="Ripasso prima di dormire"
-                    description="Una breve revisione prima di andare a dormire può aiutare a consolidare la memoria."
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Reminders */}
-            <div className="card">
-              <div className="px-6 py-4 border-b border-gray-100">
-                <h2 className="text-lg font-semibold">Prossime Scadenze</h2>
-              </div>
-              <div className="divide-y divide-gray-100">
-                <ReminderItem title="Physics Assignment" date="Tomorrow" type="Assignment" urgent />
-                <ReminderItem title="Literature Essay" date="In 3 days" type="Essay" />
-                <ReminderItem title="Chemistry Midterm" date="In 1 week" type="Exam" />
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
-      </div>
-    </div>
-  );
-};
-
-interface ProgressCardProps {
-  title: string;
-  value: string;
-  label: string;
-  icon: React.ReactNode;
-  percentage?: number;
-}
-
-const ProgressCard: React.FC<ProgressCardProps> = ({ title, value, label, icon, percentage }) => {
-  return (
-    <div className="card p-5">
-      <div className="flex justify-between items-start mb-2">
-        <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-        {icon}
-      </div>
-      <div className="flex items-baseline">
-        <p className="text-2xl font-bold">{value}</p>
-        <p className="ml-2 text-sm text-gray-500">{label}</p>
-      </div>
-      {percentage !== undefined && (
-        <div className="mt-3">
-          <div className="h-2 bg-gray-100 rounded-full">
-            <div className="h-full bg-primary-500 rounded-full" style={{ width: `${percentage}%` }}></div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-interface ActivityItemProps {
-  icon: React.ReactNode;
-  title: string;
-  time: string;
-  detail: string;
-}
-
-const ActivityItem: React.FC<ActivityItemProps> = ({ icon, title, time, detail }) => {
-  return (
-    <div className="flex">
-      <div className="mr-4 mt-1">{icon}</div>
-      <div>
-        <h3 className="font-medium">{title}</h3>
-        <div className="flex items-center mt-1">
-          <span className="text-sm text-gray-500 mr-3">{time}</span>
-          <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">{detail}</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-interface TipCardProps {
-  title: string;
-  description: string;
-}
-
-const TipCard: React.FC<TipCardProps> = ({ title, description }) => {
-  return (
-    <div className="p-4 bg-primary-50 rounded-lg">
-      <h3 className="font-medium text-primary-800 mb-1">{title}</h3>
-      <p className="text-sm text-gray-700">{description}</p>
-    </div>
-  );
-};
-
-interface ReminderItemProps {
-  title: string;
-  date: string;
-  type: string;
-  urgent?: boolean;
-}
-
-const ReminderItem: React.FC<ReminderItemProps> = ({ title, date, type, urgent }) => {
-  return (
-    <div className="px-6 py-4 flex justify-between items-center hover:bg-gray-50 transition-colors">
-      <div>
-        <div className="flex items-center">
-          <h3 className="font-medium">{title}</h3>
-          {urgent && <span className="ml-2 px-2 py-0.5 text-xs bg-red-100 text-red-800 rounded-full">Urgent</span>}
-        </div>
-        <p className="text-sm text-gray-500 mt-1">{date}</p>
-      </div>
-      <span
-        className={`text-xs px-2 py-1 rounded-full ${
-          type === "Exam" ? "bg-red-50 text-red-700" : type === "Assignment" ? "bg-blue-50 text-blue-700" : "bg-purple-50 text-purple-700"
-        }`}>
-        {type}
-      </span>
+      </section>
     </div>
   );
 };

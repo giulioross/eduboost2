@@ -1,109 +1,71 @@
-import React, { useState } from "react";
-import { BookOpen, CheckCircle2, Clock, Filter, BarChart3, Brain, Award, ArrowRight, Plus, Search, Tag, Timer } from "lucide-react";
+import React, { useEffect, useState } from "react";
+
+interface Quiz {
+  id: number;
+  question: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  correctAnswer: string;
+}
 
 const QuizPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"disponibili" | "completati">("disponibili");
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string[]>([]);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [selectedAnswer, setSelectedAnswer] = useState<Record<number, string>>({});
+  const [score, setScore] = useState<number | null>(null);
 
-  // Dati simulati
-  const subjects = ["Matematica", "Fisica", "Chimica", "Biologia", "Storia", "Letteratura", "Informatica", "Lingue"];
+  useEffect(() => {
+    fetch("http://localhost:8080/api/quizzes")
+      .then((res) => res.json())
+      .then((data) => setQuizzes(data));
+  }, []);
 
-  const difficulties = ["Facile", "Medio", "Difficile", "Esperto"];
-
-  const availableQuizzes = [
-    {
-      id: 1,
-      title: "Fondamenti di Calcolo",
-      subject: "Matematica",
-      difficulty: "Medio",
-      questions: 25,
-      timeLimit: 45,
-      description: "Metti alla prova la tua comprensione dei concetti base del calcolo, inclusi limiti, derivate e integrali.",
-      topics: ["Limiti", "Derivate", "Integrali", "Applicazioni"],
-    },
-    {
-      id: 2,
-      title: "Meccanica Classica",
-      subject: "Fisica",
-      difficulty: "Difficile",
-      questions: 30,
-      timeLimit: 60,
-      description: "Quiz completo sulle leggi di Newton, conservazione dell'energia e sistemi meccanici.",
-      topics: ["Leggi di Newton", "Energia", "Quantità di moto", "Moto Rotazionale"],
-    },
-    {
-      id: 3,
-      title: "Basi di Chimica Organica",
-      subject: "Chimica",
-      difficulty: "Medio",
-      questions: 20,
-      timeLimit: 40,
-      description: "Metti alla prova le tue conoscenze sui composti organici, reazioni e nomenclatura.",
-      topics: ["Nomenclatura", "Reazioni", "Meccanismi", "Gruppi Funzionali"],
-    },
-  ];
-
-  const completedQuizzes = [
-    {
-      id: 101,
-      title: "Fondamenti di Algebra Lineare",
-      subject: "Matematica",
-      score: 85,
-      completedAt: "2024-03-15T14:30:00",
-      timeSpent: 38,
-      correctAnswers: 21,
-      totalQuestions: 25,
-    },
-    {
-      id: 102,
-      title: "Introduzione alla Meccanica Quantistica",
-      subject: "Fisica",
-      score: 92,
-      completedAt: "2024-03-14T10:15:00",
-      timeSpent: 55,
-      correctAnswers: 27,
-      totalQuestions: 30,
-    },
-    {
-      id: 103,
-      title: "Panoramica di Biologia Cellulare",
-      subject: "Biologia",
-      score: 78,
-      completedAt: "2024-03-13T16:45:00",
-      timeSpent: 42,
-      correctAnswers: 18,
-      totalQuestions: 25,
-    },
-  ];
-
-  // Funzione per alternare il filtro per materia
-  const toggleSubjectFilter = (subject: string) => {
-    if (selectedSubjects.includes(subject)) {
-      setSelectedSubjects(selectedSubjects.filter((s) => s !== subject));
-    } else {
-      setSelectedSubjects([...selectedSubjects, subject]);
-    }
+  const handleSelect = (quizId: number, answer: string) => {
+    setSelectedAnswer((prev) => ({ ...prev, [quizId]: answer }));
   };
 
-  // Funzione per alternare il filtro per difficoltà
-  const toggleDifficultyFilter = (difficulty: string) => {
-    if (selectedDifficulty.includes(difficulty)) {
-      setSelectedDifficulty(selectedDifficulty.filter((d) => d !== difficulty));
-    } else {
-      setSelectedDifficulty([...selectedDifficulty, difficulty]);
-    }
+  const handleSubmit = () => {
+    let points = 0;
+    quizzes.forEach((q) => {
+      if (selectedAnswer[q.id] === q.correctAnswer) {
+        points++;
+      }
+    });
+    setScore(points);
   };
 
-  // Filtra i quiz disponibili in base ai filtri selezionati
-  const filteredAvailableQuizzes = availableQuizzes.filter((quiz) => {
-    const subjectMatch = selectedSubjects.length === 0 || selectedSubjects.includes(quiz.subject);
-    const difficultyMatch = selectedDifficulty.length === 0 || selectedDifficulty.includes(quiz.difficulty);
-    return subjectMatch && difficultyMatch;
-  });
+  return (
+    <div className="container-custom py-6">
+      <h1 className="text-2xl font-bold mb-4">Quiz</h1>
+      {quizzes.map((quiz) => (
+        <div key={quiz.id} className="mb-4 p-4 border rounded shadow">
+          <p className="font-medium">{quiz.question}</p>
+          {[quiz.optionA, quiz.optionB, quiz.optionC].map((opt) => (
+            <label key={opt} className="block mt-1">
+              <input
+                type="radio"
+                name={`quiz-${quiz.id}`}
+                value={opt}
+                checked={selectedAnswer[quiz.id] === opt}
+                onChange={() => handleSelect(quiz.id, opt)}
+              />
+              <span className="ml-2">{opt}</span>
+            </label>
+          ))}
+        </div>
+      ))}
 
-  return <div className="container-custom py-8">{/* Contenuto tradotto */}</div>;
+      <button onClick={handleSubmit} className="bg-blue-600 text-white py-2 px-4 rounded mt-4 hover:bg-blue-700">
+        Submit
+      </button>
+
+      {score !== null && (
+        <div className="mt-4 text-lg font-bold">
+          You scored {score} out of {quizzes.length}
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default QuizPage;
