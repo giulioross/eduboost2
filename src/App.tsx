@@ -12,6 +12,7 @@ import FocusModePage from "./pages/FocusModePage";
 import ProfilePage from "./pages/ProfilePage";
 import QuizAdminPage from "./pages/QuizAdminPage";
 import FocusHistory from "./pages/FocusHistory";
+import LoginPage from "./pages/LoginPage";
 
 function App() {
   return (
@@ -19,6 +20,9 @@ function App() {
       <Navbar />
       <main className="flex-1">
         <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          {/* Define your routes here */}
+          <Route path="/home" element={<HomePage />} />
           <Route path="/" element={<HomePage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/routines" element={<RoutinePage />} />

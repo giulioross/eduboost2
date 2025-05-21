@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // API base URL configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
@@ -7,6 +8,45 @@ async function handleResponse(response: Response) {
     const error = await response.json().catch(() => ({ message: 'An error occurred' }));
     throw new Error(error.message || 'Network response was not ok');
   }
+=======
+const API_BASE_URL = "http://localhost:8080/api";
+
+// ✅ Funzione per aggiungere header di autenticazione
+function getAuthHeaders() {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("Token mancante. Effettua di nuovo il login.");
+  return { Authorization: `Bearer ${token}` };
+}
+
+// ✅ Login e salvataggio del token
+export async function loginUser(credentials: { email: string; password: string }) {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(credentials),
+  });
+
+  if (!response.ok) {
+    throw new Error("Credenziali non valide");
+  }
+
+  const data = await response.json();
+
+  if (data.token) {
+    localStorage.setItem("token", data.token);
+  } else {
+    throw new Error("Token non ricevuto");
+  }
+
+  return data;
+}
+
+// ✅ Funzioni con token
+export async function fetchRoutines() {
+  const response = await fetch(`${API_BASE_URL}/routines`, {
+    headers: getAuthHeaders(),
+  });
+>>>>>>> 638423a (o)
   return response.json();
 }
 
@@ -33,12 +73,22 @@ export async function fetchRoutines() {
 }
 
 export async function addRoutine(data: any) {
+<<<<<<< HEAD
   return fetchApi('/routines', {
     method: 'POST',
+=======
+  const response = await fetch(`${API_BASE_URL}/routines`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+>>>>>>> 638423a (o)
     body: JSON.stringify(data),
   });
 }
 
+<<<<<<< HEAD
 export async function deleteRoutine(id: number) {
   return fetchApi(`/routines/${id}`, {
     method: 'DELETE',
@@ -108,6 +158,38 @@ export async function getRecentActivities() {
 
 export async function getReminders() {
   return fetchApi('/reminders');
+=======
+export async function getUpcomingSessions() {
+  const response = await fetch(`${API_BASE_URL}/upcoming-sessions`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) throw new Error("Failed to fetch upcoming sessions");
+  return response.json();
+}
+
+export async function getWeeklyStats() {
+  const response = await fetch(`${API_BASE_URL}/weekly-stats`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) throw new Error("Failed to fetch weekly stats");
+  return response.json();
+}
+
+export async function getRecentActivities() {
+  const response = await fetch(`${API_BASE_URL}/recent-activities`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) throw new Error("Failed to fetch recent activities");
+  return response.json();
+}
+
+export async function getReminders() {
+  const response = await fetch(`${API_BASE_URL}/reminders`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) throw new Error("Failed to fetch reminders");
+  return response.json();
+>>>>>>> 638423a (o)
 }
 
 // Types
