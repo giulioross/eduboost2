@@ -1,64 +1,84 @@
-import React, { useEffect, useState } from "react";
-
-type MindMap = {
-  id: number;
-  title: string;
-  content: string;
-};
+import React from "react";
+import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { fetchMindMaps, createMindMap, deleteMindMap, MindMap as MindMapType } from '../services/api';
 
 const MindMap = () => {
-  const [mindmaps, setMindmaps] = useState<MindMap[]>([]);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [title, setTitle] = React.useState("");
+  const [content, setContent] = React.useState("");
+  const queryClient = useQueryClient();
 
-  const fetchMindMaps = async () => {
-    const res = await fetch("http://localhost:8080/api/mindmaps");
-    const data = await res.json();
-    setMindmaps(data);
-  };
+  const { data: mindmaps = [], isLoading, error } = useQuery<MindMapType[]>('mindmaps', fetchMindMaps);
 
-  const createMindMap = async () => {
-    await fetch("http://localhost:8080/api/mindmaps", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, content }),
-    });
-    setTitle("");
-    setContent("");
-    fetchMindMaps();
-  };
+  const createMutation = useMutation(createMindMap, {
+    onSuccess: () => {
+      queryClient.invalidateQueries('mindmaps');
+      setTitle("");
+      setContent("");
+    },
+  });
 
-  const deleteMindMap = async (id: number) => {
-    await fetch(`http://localhost:8080/api/mindmaps/${id}`, {
-      method: "DELETE",
-    });
-    fetchMindMaps();
-  };
+  const deleteMutation = useMutation(deleteMindMap, {
+    onSuccess: () => {
+      queryClient.invalidateQueries('mindmaps');
+    },
+  });
 
-  useEffect(() => {
-    fetchMindMaps();
-  }, []);
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 text-red-600">
+        Error loading mind maps: {(error as Error).message}
+      </div>
+    );
+  }
 
   return (
     <div className="p-4">
       <h2 className="text-2xl mb-4 font-bold">Mind Maps</h2>
-      <input className="border p-2 mb-2 w-full" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-      <textarea className="border p-2 mb-2 w-full" placeholder="Content" value={content} onChange={(e) => setContent(e.target.value)} />
-      <button onClick={createMindMap} className="bg-blue-500 text-white px-4 py-2 rounded">
-        Add Mind Map
-      </button>
+      <div className="space-y-4 mb-6">
+        <input
+          className="input w-full"
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+        <textarea
+          className="input w-full h-32"
+          placeholder="Content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+        />
+        <button
+          onClick={() => createMutation.mutate({ title, content })}
+          disabled={createMutation.isLoading}
+          className="btn btn-primary w-full"
+        >
+          {createMutation.isLoading ? 'Adding...' : 'Add Mind Map'}
+        </button>
+      </div>
 
-      <ul className="mt-4 space-y-2">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {mindmaps.map((m) => (
-          <li key={m.id} className="border p-2 rounded">
-            <strong>{m.title}</strong>
-            <p>{m.content}</p>
-            <button onClick={() => deleteMindMap(m.id)} className="text-red-500 text-sm">
+          <div key={m.id} className="card p-4">
+            <h3 className="font-semibold text-lg mb-2">{m.title}</h3>
+            <p className="text-gray-600 mb-4">{m.content}</p>
+            <button
+              onClick={() => deleteMutation.mutate(m.id)}
+              disabled={deleteMutation.isLoading}
+              className="text-red-500 text-sm hover:text-red-700"
+            >
               Delete
             </button>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 };
