@@ -1,84 +1,61 @@
 import React from "react";
-import { useQuery } from 'react-query';
-import { fetchQuizzes, Quiz } from '../services/api';
+import { useQuery, useMutation, useQueryClient } from "react-query";
+import { fetchQuizzes, createQuiz, deleteQuiz } from "../services/api";
 
-const QuizPage: React.FC = () => {
-  const [selectedAnswers, setSelectedAnswers] = React.useState<Record<number, string>>({});
-  const [score, setScore] = React.useState<number | null>(null);
+interface Quiz {
+  id: number;
+  title: string;
+}
 
-  const { data: quizzes = [], isLoading, error } = useQuery<Quiz[]>('quizzes', fetchQuizzes);
+const QuizPage = () => {
+  const [title, setTitle] = React.useState("");
+  const queryClient = useQueryClient();
 
-  const handleSelect = (questionId: number, answer: string) => {
-    setSelectedAnswers((prev) => ({ ...prev, [questionId]: answer }));
-  };
+  const { data: quizzes = [], isLoading, error } = useQuery<Quiz[]>("quizzes", fetchQuizzes);
 
-  const handleSubmit = () => {
-    let points = 0;
-    quizzes.forEach((quiz) => {
-      quiz.questions.forEach((question) => {
-        if (selectedAnswers[question.id] === question.correctAnswer) {
-          points++;
-        }
-      });
-    });
-    setScore(points);
-  };
+  const createMutation = useMutation(createQuiz, {
+    onSuccess: () => {
+      queryClient.invalidateQueries("quizzes");
+      setTitle("");
+    },
+  });
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
+  const deleteMutation = useMutation(deleteQuiz, {
+    onSuccess: () => queryClient.invalidateQueries("quizzes"),
+  });
 
-  if (error) {
-    return (
-      <div className="container-custom py-6 text-red-600">
-        Error loading quizzes: {(error as Error).message}
-      </div>
-    );
-  }
+  if (isLoading) return <div>Loading quizzes...</div>;
+  if (error instanceof Error) return <div className="text-red-600">Errore nel caricamento: {error.message}</div>;
 
   return (
-    <div className="container-custom py-6">
-      <h1 className="text-2xl font-bold mb-4">Quiz</h1>
-      {quizzes.map((quiz) => (
-        <div key={quiz.id} className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">{quiz.title}</h2>
-          {quiz.questions.map((question) => (
-            <div key={question.id} className="mb-4 p-4 border rounded shadow">
-              <p className="font-medium mb-3">{question.question}</p>
-              {[question.optionA, question.optionB, question.optionC].map((opt) => (
-                <label key={opt} className="block mt-2">
-                  <input
-                    type="radio"
-                    name={`question-${question.id}`}
-                    value={opt}
-                    checked={selectedAnswers[question.id] === opt}
-                    onChange={() => handleSelect(question.id, opt)}
-                    className="mr-2"
-                  />
-                  <span>{opt}</span>
-                </label>
-              ))}
-            </div>
-          ))}
-        </div>
-      ))}
+    <div className="p-4">
+      <h2 className="text-2xl mb-4 font-bold">Quizzes</h2>
 
-      <button
-        onClick={handleSubmit}
-        className="btn btn-primary"
-      >
-        Submit
-      </button>
+      <div className="mb-6 space-y-4">
+        <input className="input w-full" placeholder="Quiz Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <button
+          disabled={createMutation.isLoading}
+          className="btn btn-primary w-full"
+          onClick={() =>
+            createMutation.mutate({
+              title,
+              questions: [],
+            })
+          }>
+          {createMutation.isLoading ? "Adding..." : "Add Quiz"}
+        </button>
+      </div>
 
-      {score !== null && (
-        <div className="mt-4 p-4 bg-green-50 text-green-700 rounded-lg">
-          You scored {score} out of {quizzes.reduce((total, quiz) => total + quiz.questions.length, 0)}
-        </div>
-      )}
+      <ul className="space-y-2">
+        {quizzes.map((q) => (
+          <li key={q.id} className="flex justify-between p-2 border rounded shadow">
+            <span>{q.title}</span>
+            <button disabled={deleteMutation.isLoading} className="text-red-500 hover:text-red-700" onClick={() => deleteMutation.mutate(q.id)}>
+              Delete
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

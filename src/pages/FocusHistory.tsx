@@ -1,13 +1,11 @@
 import React from "react";
-import { useQuery } from 'react-query';
-import { getFocusSessions, FocusSession } from '../services/api';
+import { useQuery } from "react-query";
+import { getFocusSessions, saveFocusSession, FocusSession } from "../services/api";
 
 const FocusHistory: React.FC = () => {
   const userId = 1; // This should come from your auth context
-  const { data: sessions = [], isLoading, error } = useQuery<FocusSession[]>(
-    ['focusSessions', userId],
-    () => getFocusSessions(userId)
-  );
+  const { data, isLoading, error } = useQuery<FocusSession[]>(["focusSessions", userId], () => getFocusSessions(userId));
+  const sessions = Array.isArray(data) ? data : [];
 
   if (isLoading) {
     return (
@@ -18,11 +16,7 @@ const FocusHistory: React.FC = () => {
   }
 
   if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8 text-red-600">
-        Error loading focus sessions: {(error as Error).message}
-      </div>
-    );
+    return <div className="container mx-auto px-4 py-8 text-red-600">Error loading focus sessions: {(error as Error).message}</div>;
   }
 
   return (
@@ -39,17 +33,14 @@ const FocusHistory: React.FC = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {sessions.map((session, index) => (
-              <tr key={session.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {new Date(session.startTime).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {Math.floor(session.duration / 60)} minutes
-                </td>
+              <tr key={session.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(session.startTime).toLocaleDateString()}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{Math.floor(session.duration / 60)} minutes</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    session.status === 'WORK' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                  }`}>
+                  <span
+                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      session.status === "WORK" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"
+                    }`}>
                     {session.status}
                   </span>
                 </td>

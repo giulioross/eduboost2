@@ -1,40 +1,48 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 
 import Footer from "./layout/Footer";
 import Navbar from "./layout/Navbar";
 import HomePage from "./pages/HomePage";
 import DashboardPage from "./pages/DashboardPage";
 import RoutinePage from "./pages/RoutinePage";
-import MindMap from "./pages/MindMap"; // Ensure the file exists at this path or adjust the path accordingly
+import MindMap from "./pages/MindMap";
 import QuizPage from "./pages/QuizPage";
 import FocusModePage from "./pages/FocusModePage";
 import ProfilePage from "./pages/ProfilePage";
 import QuizAdminPage from "./pages/QuizAdminPage";
 import FocusHistory from "./pages/FocusHistory";
 import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage"; // importa la nuova pagina
 
 function App() {
+  const location = useLocation();
+  const token = localStorage.getItem("token");
+  const isLoginOrRegisterPage = location.pathname === "/login" || location.pathname === "/register";
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar />
+      {!isLoginOrRegisterPage && <Navbar />}
       <main className="flex-1">
         <Routes>
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
-          {/* Define your routes here */}
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/" element={<HomePage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/routines" element={<RoutinePage />} />
-          <Route path="/mental-maps" element={<MindMap />} />
-          <Route path="/quizzes" element={<QuizPage />} />
-          <Route path="/quiz-admin" element={<QuizAdminPage />} />
-          <Route path="/focus" element={<FocusModePage />} />
-          <Route path="/focus-history" element={<FocusHistory />} />
-          <Route path="/profile" element={<ProfilePage />} />
+
+          {/* Root redirige a dashboard o login */}
+          <Route path="/" element={token ? <DashboardPage /> : <Navigate to="/login" replace />} />
+
+          <Route path="/home" element={token ? <HomePage /> : <Navigate to="/login" replace />} />
+          <Route path="/dashboard" element={token ? <DashboardPage /> : <Navigate to="/login" replace />} />
+          <Route path="/routines" element={token ? <RoutinePage /> : <Navigate to="/login" replace />} />
+          <Route path="/mental-maps" element={token ? <MindMap /> : <Navigate to="/login" replace />} />
+          <Route path="/quizzes" element={token ? <QuizPage /> : <Navigate to="/login" replace />} />
+          <Route path="/quiz-admin" element={token ? <QuizAdminPage /> : <Navigate to="/login" replace />} />
+          <Route path="/focus" element={token ? <FocusModePage /> : <Navigate to="/login" replace />} />
+          <Route path="/focus-history" element={token ? <FocusHistory /> : <Navigate to="/login" replace />} />
+          <Route path="/profile" element={token ? <ProfilePage /> : <Navigate to="/login" replace />} />
         </Routes>
       </main>
-      <Footer />
+      {!isLoginOrRegisterPage && <Footer />}
     </div>
   );
 }
