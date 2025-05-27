@@ -117,6 +117,8 @@ export interface MindMap {
 }
 
 export interface Routine {
+  points: never[];
+  date: string;
   id: number;
   title: string;
   description: string;
@@ -174,43 +176,73 @@ export const deleteMindMap = (id: number): Promise<void> =>
   });
 
 // --- Routines ---
-export const fetchRoutines = (): Promise<Routine[]> => fetchApi("/routines");
-
 export interface Routine {
   id: number;
-  name: string; // era title
+  name: string;
   description: string;
+  subject?: string;
+  time?: string;
+  duration?: number;
+  days: string[];
   userId?: number;
   createdAt?: string;
   updatedAt?: string;
 }
-export const addRoutine = (data: { name: string; description: string }): Promise<Routine> =>
-  fetchApi("/routines", {
+
+export async function fetchRoutines(): Promise<Routine[]> {
+  const res = await fetchApi("/routines");
+  return Array.isArray(res) ? res : [];
+}
+
+export const addRoutine = async (routine: { name: string; description: string; subject: string; time: string; duration: number; days: string[] }) => {
+  return fetchApi("/routines", {
     method: "POST",
-    body: JSON.stringify({
-      name: data.name,
-      description: data.description,
-    }),
+    body: JSON.stringify(routine),
   });
+};
+
 export const deleteRoutine = (id: number): Promise<void> =>
   fetchApi(`/routines/${id}`, {
     method: "DELETE",
   });
 
 // --- Quizzes ---
-export const fetchQuizzes = (): Promise<Quiz[]> => fetchApi("/quizzes");
+// Modifica le interfacce per i tipi di richiesta
+export interface CreateQuizRequest {
+  title: string;
+  questions: QuizQuestion[];
+}
 
-export const createQuiz = (data: Omit<Quiz, "id">): Promise<Quiz> =>
-  fetchApi("/quizzes", {
+export interface QuizResponse {
+  id: number;
+  title: string;
+  questions: QuizQuestion[];
+  userId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Aggiorna le funzioni API
+export const createQuizWithQuestions = async (data: CreateQuizRequest): Promise<Quiz> => {
+  return fetchApi("/quizzes", {
     method: "POST",
     body: JSON.stringify(data),
+    headers: {
+      "Content-Type": "application/json",
+    },
   });
+};
 
-export const deleteQuiz = (id: number): Promise<void> =>
-  fetchApi(`/quizzes/${id}`, {
+export const fetchQuizzes = async (): Promise<Quiz[]> => {
+  const res = await fetchApi("/quizzes");
+  return Array.isArray(res) ? res : [];
+};
+
+export const deleteQuiz = async (id: number): Promise<void> => {
+  return fetchApi(`/quizzes/${id}`, {
     method: "DELETE",
   });
-
+};
 // --- Focus Sessions ---
 export const saveFocusSession = (data: Omit<FocusSession, "id">): Promise<FocusSession> =>
   fetchApi("/sessions", {
