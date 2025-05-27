@@ -1,6 +1,9 @@
-import { ReactNode } from "react";
+/// <reference types="vite/client" />
 
-const API_BASE_URL = "http://localhost:8080/api";
+const API_BASE_URL =
+  typeof import.meta.env.VITE_API_URL === "string" && import.meta.env.VITE_API_URL.trim() !== ""
+    ? import.meta.env.VITE_API_URL
+    : "http://localhost:8080/api";
 
 // Recupera il token JWT da localStorage
 function getToken(): string | null {
@@ -26,24 +29,20 @@ function getAuthHeaders(): Record<string, string> {
 async function handleResponse(response: Response) {
   if (!response.ok) {
     let errorMessage = "Errore generico";
-
     try {
       const error = await response.json();
       errorMessage = error.message || errorMessage;
+      // Gestione caso specifico: utente non autenticato
+      if (errorMessage === "User not authenticated") {
+        clearToken();
+        window.location.href = "/login";
+        throw new Error("Sessione scaduta. Effettua nuovamente il login.");
+      }
     } catch {
       errorMessage = await response.text();
     }
-
-    if (response.status === 401) {
-      clearToken();
-      window.location.href = "/login";
-      throw new Error("Sessione scaduta. Effettua nuovamente il login.");
-    }
-
-    console.error(`Errore API [${response.status}]: ${errorMessage}`);
     throw new Error(errorMessage);
   }
-
   return response.json();
 }
 
@@ -57,13 +56,12 @@ export async function fetchApi(path: string, options: RequestInit = {}) {
       ...options.headers,
     },
   });
-
   return handleResponse(response);
 }
 
 // Login
-export async function loginUser(credentials: { email: string; password: string }) {
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+export async function loginUser(credentials: { username: string; password: string }) {
+  const response = await fetch(`${API_BASE_URL}/auth/signin`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(credentials),
@@ -73,6 +71,8 @@ export async function loginUser(credentials: { email: string; password: string }
 
   if (data.token) {
     localStorage.setItem("token", data.token);
+    localStorage.setItem("username", data.username || credentials.username);
+    if (data.roles) localStorage.setItem("roles", JSON.stringify(data.roles));
   } else {
     throw new Error("Token non ricevuto");
   }
@@ -81,8 +81,16 @@ export async function loginUser(credentials: { email: string; password: string }
 }
 
 // Registrazione
-export async function registerUser(data: { email: string; password: string; name?: string; surname?: string }) {
-  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+export async function registerUser(data: {
+  username: string;
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  userType: string;
+  roles: string[];
+}) {
+  const response = await fetch(`${API_BASE_URL}/auth/signup`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -117,48 +125,73 @@ export interface Routine {
   updatedAt?: string;
 }
 
+// Nuova struttura per quiz e domande
+export interface QuizQuestion {
+  question: string;
+  options: string[]; // 4 risposte
+  correctIndex: number; // indice della risposta corretta (0-3)
+}
+
 export interface Quiz {
   id: number;
   title: string;
-  questions: any[];
+  questions: QuizQuestion[];
   userId?: number;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface FocusSession {
-  status: ReactNode;
   id: number;
   userId: number;
   duration: number;
   startTime: string;
   endTime: string;
   mode: "POMODORO" | "CUSTOM";
+  status: "WORK" | "BREAK";
 }
 
 // --- MindMaps ---
-export const fetchMindMaps = (p0: string): Promise<MindMap[]> => fetchApi("/mindmaps");
+export const fetchMindMaps = async (): Promise<MindMap[]> => {
+  const res = await fetchApi("/maps");
+  return Array.isArray(res) ? res : [];
+};
 
-export const createMindMap = (data: { title: string; content: string }, p0: string): Promise<MindMap> =>
-  fetchApi("/mindmaps", {
+export const createMindMap = (data: { title: string; content: string }): Promise<MindMap> =>
+  fetchApi("/maps", {
     method: "POST",
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      title: data.title,
+      description: data.content, // usa content come description
+      subject: "", // opzionale, puoi aggiungere un campo se vuoi
+      topic: "", // opzionale, puoi aggiungere un campo se vuoi
+    }),
   });
 
-export const deleteMindMap = (id: number, p0: string): Promise<void> =>
-  fetchApi(`/mindmaps/${id}`, {
+export const deleteMindMap = (id: number): Promise<void> =>
+  fetchApi(`/maps/${id}`, {
     method: "DELETE",
   });
 
 // --- Routines ---
 export const fetchRoutines = (): Promise<Routine[]> => fetchApi("/routines");
 
-export const addRoutine = (data: Omit<Routine, "id">): Promise<Routine> =>
+export interface Routine {
+  id: number;
+  name: string; // era title
+  description: string;
+  userId?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+export const addRoutine = (data: { name: string; description: string }): Promise<Routine> =>
   fetchApi("/routines", {
     method: "POST",
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      name: data.name,
+      description: data.description,
+    }),
   });
-
 export const deleteRoutine = (id: number): Promise<void> =>
   fetchApi(`/routines/${id}`, {
     method: "DELETE",
@@ -180,14 +213,12 @@ export const deleteQuiz = (id: number): Promise<void> =>
 
 // --- Focus Sessions ---
 export const saveFocusSession = (data: Omit<FocusSession, "id">): Promise<FocusSession> =>
-  fetchApi("/focus-sessions", {
+  fetchApi("/sessions", {
     method: "POST",
     body: JSON.stringify(data),
   });
 
-export const getFocusSessions = (userId: number): Promise<FocusSession[]> => fetchApi(`/focus-sessions/${userId}`);
-
-// --- Dashboard ---
+export const getRecentSessions = (): Promise<FocusSession[]> => fetchApi("/sessions"); // --- Dashboard ---
 export const getUpcomingSessions = () => fetchApi("/upcoming-sessions");
 export const getWeeklyStats = () => fetchApi("/weekly-stats");
 export const getRecentActivities = () => fetchApi("/recent-activities");

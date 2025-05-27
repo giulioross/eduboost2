@@ -36,7 +36,7 @@ const LoginPage: React.FC = () => {
 
         // 🔁 Reindirizzamento dinamico in base al ruolo
         if (data.roles.includes("ROLE_ADMIN")) {
-          navigate("/admin");
+          navigate("/dashboard");
         } else {
           navigate("/dashboard");
         }

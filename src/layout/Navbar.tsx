@@ -8,7 +8,7 @@ const Navbar: React.FC = () => {
   const location = useLocation();
 
   const menuItems = [
-    { name: "Home", path: "/", icon: <Home size={20} /> },
+    { name: "Home", path: "/home", icon: <Home size={20} /> },
     { name: "Dashboard", path: "/dashboard", icon: <ClipboardList size={20} /> },
     { name: "Study Routines", path: "/routines", icon: <Calendar size={20} /> },
     { name: "Mental Maps", path: "/mental-maps", icon: <Brain size={20} /> },

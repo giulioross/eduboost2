@@ -1,61 +1,76 @@
-import React from "react";
-import { useQuery, useMutation, useQueryClient } from "react-query";
-import { fetchQuizzes, createQuiz, deleteQuiz } from "../services/api";
-
-interface Quiz {
-  id: number;
-  title: string;
-}
+import React, { useState } from "react";
+import { useQuery } from "react-query";
+import { fetchQuizzes, Quiz } from "../services/api";
 
 const QuizPage = () => {
-  const [title, setTitle] = React.useState("");
-  const queryClient = useQueryClient();
+  const { data: quizzes = [] } = useQuery<Quiz[]>("quizzes", fetchQuizzes);
+  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
+  const [answers, setAnswers] = useState<number[]>([]);
+  const [score, setScore] = useState<number | null>(null);
 
-  const { data: quizzes = [], isLoading, error } = useQuery<Quiz[]>("quizzes", fetchQuizzes);
+  const startQuiz = (quiz: Quiz) => {
+    setSelectedQuiz(quiz);
+    setAnswers(Array(quiz.questions.length).fill(-1));
+    setScore(null);
+  };
 
-  const createMutation = useMutation(createQuiz, {
-    onSuccess: () => {
-      queryClient.invalidateQueries("quizzes");
-      setTitle("");
-    },
-  });
+  const handleAnswer = (qIdx: number, optIdx: number) => {
+    setAnswers((prev) => prev.map((a, i) => (i === qIdx ? optIdx : a)));
+  };
 
-  const deleteMutation = useMutation(deleteQuiz, {
-    onSuccess: () => queryClient.invalidateQueries("quizzes"),
-  });
+  const submitQuiz = () => {
+    if (!selectedQuiz) return;
+    let s = 0;
+    selectedQuiz.questions.forEach((q, i) => {
+      if (answers[i] === q.correctIndex) s++;
+    });
+    setScore(s);
+    // Qui puoi anche salvare il punteggio sul backend per la dashboard
+  };
 
-  if (isLoading) return <div>Loading quizzes...</div>;
-  if (error instanceof Error) return <div className="text-red-600">Errore nel caricamento: {error.message}</div>;
+  if (!selectedQuiz)
+    return (
+      <div className="p-4">
+        <h2 className="text-2xl mb-4 font-bold">Scegli un quiz</h2>
+        <ul className="space-y-2">
+          {quizzes.map((q) => (
+            <li key={q.id}>
+              <button className="btn btn-primary" onClick={() => startQuiz(q)}>
+                {q.title}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl mb-4 font-bold">Quizzes</h2>
-
-      <div className="mb-6 space-y-4">
-        <input className="input w-full" placeholder="Quiz Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-        <button
-          disabled={createMutation.isLoading}
-          className="btn btn-primary w-full"
-          onClick={() =>
-            createMutation.mutate({
-              title,
-              questions: [],
-            })
-          }>
-          {createMutation.isLoading ? "Adding..." : "Add Quiz"}
+    <div className="p-4 max-w-2xl mx-auto">
+      <h2 className="text-2xl mb-4 font-bold">{selectedQuiz.title}</h2>
+      {selectedQuiz.questions.map((q, qIdx) => (
+        <div key={qIdx} className="mb-6">
+          <div className="font-semibold mb-2">
+            {qIdx + 1}. {q.question}
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            {q.options.map((opt, oIdx) => (
+              <label key={oIdx} className="flex items-center">
+                <input type="radio" name={`q${qIdx}`} checked={answers[qIdx] === oIdx} onChange={() => handleAnswer(qIdx, oIdx)} className="mr-2" />
+                {opt}
+              </label>
+            ))}
+          </div>
+        </div>
+      ))}
+      {score === null ? (
+        <button className="btn btn-primary" onClick={submitQuiz}>
+          Invia quiz
         </button>
-      </div>
-
-      <ul className="space-y-2">
-        {quizzes.map((q) => (
-          <li key={q.id} className="flex justify-between p-2 border rounded shadow">
-            <span>{q.title}</span>
-            <button disabled={deleteMutation.isLoading} className="text-red-500 hover:text-red-700" onClick={() => deleteMutation.mutate(q.id)}>
-              Delete
-            </button>
-          </li>
-        ))}
-      </ul>
+      ) : (
+        <div className="mt-4 text-xl font-bold text-green-700">
+          Punteggio: {score} / {selectedQuiz.questions.length}
+        </div>
+      )}
     </div>
   );
 };
