@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // aggiungi Link
 
 interface LoginRequest {
   username: string;
@@ -78,6 +78,13 @@ const LoginPage: React.FC = () => {
           {loading ? "Accesso in corso..." : "Accedi"}
         </button>
       </form>
+      {/* Bottone Registrati */}
+      <div className="mt-6 text-center">
+        <span className="text-gray-600">Non hai un account?</span>
+        <Link to="/register" className="ml-2 text-blue-600 hover:underline font-medium">
+          Registrati
+        </Link>
+      </div>
     </div>
   );
 };

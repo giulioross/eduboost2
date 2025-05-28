@@ -83,10 +83,6 @@ const Navbar: React.FC = () => {
                 <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                   Profilo
                 </Link>
-                <Link to="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                  Impostazioni
-                </Link>
-                <button className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50">Logout</button>
               </div>
             </div>
           </div>
@@ -137,16 +133,6 @@ const Navbar: React.FC = () => {
                 <User size={20} />
                 <span>Profile</span>
               </Link>
-              <button className="flex items-center space-x-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-gray-50 rounded-lg w-full">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path
-                    fillRule="evenodd"
-                    d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V7.414l-4-4H3zm9 2.414L15.414 9H12V5.414zM3 7h5v2H3V7zm0 4h5v2H3v-2zm10 0h-2v2h2v-2z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span>Logout</span>
-              </button>
             </div>
           </div>
         )}

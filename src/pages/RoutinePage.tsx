@@ -109,7 +109,7 @@ const RoutinePage = () => {
   if (isLoading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
   if (error) return <div className="p-4 bg-red-100 text-red-700">Error loading routines</div>;
 
-  function addPoint(event: MouseEvent<HTMLButtonElement, MouseEvent>): void {
+  function addPoint(event: React.MouseEvent<HTMLButtonElement>): void {
     throw new Error("Function not implemented.");
   }
 

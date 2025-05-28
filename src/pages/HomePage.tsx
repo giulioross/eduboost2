@@ -44,9 +44,7 @@ const HomePage: React.FC = () => {
         <div className="container-custom">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Funzionalità Progettate Per Il Successo Degli Studenti</h2>
-            <p className="text-lg text-gray-600">
-              EduBoost combina intelligenza artificiale e tecniche di studio comprovate per aiutarti a massimizzare il tuo potenziale.
-            </p>
+            <p className="text-lg text-gray-600">EduBoost lavora sulle tecniche di studio adatte ad aiutarti a massimizzare il tuo potenziale.</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -55,36 +53,42 @@ const HomePage: React.FC = () => {
               title="Routine di Studio Intelligenti"
               description="Crea programmi di studio personalizzati basati sui tuoi obiettivi, materie e tempi di studio ottimali."
               delay={0.1}
+              to="/routines"
             />
             <FeatureCard
               icon={<Brain className="h-10 w-10 text-primary-600" />}
               title="Mappe Mentali"
               description="Costruisci mappe mentali interattive per visualizzare le connessioni tra i concetti e migliorare la memorizzazione."
               delay={0.2}
+              to="/mindmap"
             />
             <FeatureCard
               icon={<BookOpen className="h-10 w-10 text-primary-600" />}
               title="Quiz Adattivi"
-              description="Metti alla prova le tue conoscenze con domande generate dall'IA che si concentrano sulle tue aree deboli."
+              description="Metti alla prova le tue conoscenze con domande e quiz che si concentrano sulle tue aree deboli."
               delay={0.3}
+              to="/quiz"
             />
             <FeatureCard
               icon={<Clock className="h-10 w-10 text-primary-600" />}
               title="Modalità Focus"
               description="Blocca le distrazioni e rimani motivato con sessioni di studio temporizzate e incentivi."
               delay={0.4}
+              to="/focus"
             />
             <FeatureCard
               icon={<TrendingUp className="h-10 w-10 text-primary-600" />}
               title="Analisi dei Progressi"
               description="Monitora le tue abitudini di studio, le prestazioni nei quiz e la crescita delle conoscenze nel tempo."
               delay={0.5}
+              to="/dashboard"
             />
             <FeatureCard
               icon={<Target className="h-10 w-10 text-primary-600" />}
               title="Consigli e Tecniche di Studio"
               description="Ricevi raccomandazioni personalizzate sui metodi di studio in base al tuo stile di apprendimento."
               delay={0.6}
+              to="/dashboard"
             />
           </div>
         </div>
@@ -147,15 +151,18 @@ interface FeatureCardProps {
   title: string;
   description: string;
   delay: number;
+  to: string;
 }
 
-const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, delay }) => {
+const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, delay, to }) => {
   return (
-    <div className="card p-6 border transition-all duration-300 hover:border-primary-300 animate-slide-up" style={{ animationDelay: `${delay}s` }}>
-      <div className="mb-4">{icon}</div>
-      <h3 className="text-xl font-semibold mb-2">{title}</h3>
-      <p className="text-gray-600">{description}</p>
-    </div>
+    <Link to={to} className="block">
+      <div className="card p-6 border transition-all duration-300 hover:border-primary-300 animate-slide-up" style={{ animationDelay: `${delay}s` }}>
+        <div className="mb-4">{icon}</div>
+        <h3 className="text-xl font-semibold mb-2">{title}</h3>
+        <p className="text-gray-600">{description}</p>
+      </div>
+    </Link>
   );
 };
 
