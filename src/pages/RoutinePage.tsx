@@ -6,15 +6,15 @@ import "react-datepicker/dist/react-datepicker.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiPlus, FiTrash2, FiCalendar, FiList, FiClock } from "react-icons/fi";
 
-// Tipi per blocchi e dayOfWeek
 type DayOfWeek = "SUNDAY" | "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY";
+
 type StudyBlock = {
-  id: number;
+  id?: number;
   dayOfWeek: DayOfWeek;
-  startTime?: string;
-  endTime?: string;
-  // altri campi se servono
+  startTime: string;
+  endTime: string;
 };
+
 type RoutineWithBlocks = Routine & { studyBlocks?: StudyBlock[] };
 
 const getDayOfWeek = (date: Date): DayOfWeek => {
@@ -22,94 +22,104 @@ const getDayOfWeek = (date: Date): DayOfWeek => {
   return days[date.getDay()];
 };
 
+const calculateEndTime = (startTime: string, duration: number): string => {
+  const [hours, minutes] = startTime.split(":").map(Number);
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+  date.setMinutes(date.getMinutes() + duration);
+  return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+};
+
 const RoutinePage = () => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-  const [time, setTime] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [duration, setDuration] = useState(60);
   const [points, setPoints] = useState<string[]>([""]);
   const [isDaySelected, setIsDaySelected] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch all routines (con eventuali studyBlocks)
   const { data, isLoading, error } = useQuery<RoutineWithBlocks[]>("routines", fetchRoutines);
   const routines: RoutineWithBlocks[] = Array.isArray(data) ? data : [];
 
-  // Filtro per giorno della settimana
   const selectedDayOfWeek = selectedDate ? getDayOfWeek(selectedDate) : null;
   const selectedDayRoutines = routines.filter((routine) => routine.studyBlocks?.some((block) => block.dayOfWeek === selectedDayOfWeek));
 
-  // Create routine mutation
   const createMutation = useMutation(addRoutine, {
     onSuccess: () => {
       queryClient.invalidateQueries("routines");
       resetForm();
     },
+    onError: (error) => {
+      console.error("Error creating routine:", error);
+      alert("Failed to create routine");
+    },
   });
 
-  // Delete routine mutation
   const deleteMutation = useMutation(deleteRoutine, {
     onSuccess: () => {
       queryClient.invalidateQueries("routines");
     },
   });
 
-  // Handle date selection
   const handleDateChange = (date: Date | null) => {
     if (!date) return;
     setSelectedDate(date);
     setIsDaySelected(true);
   };
 
-  // Reset form
   const resetForm = () => {
     setName("");
     setDescription("");
-    setTime("");
+    setStartTime("");
+    setDuration(60);
     setPoints([""]);
   };
 
-  // Handle point changes
-  const handlePointChange = (idx: number, value: string) => {
-    setPoints((prev) => prev.map((p, i) => (i === idx ? value : p)));
-  };
-
-  const addPoint = () => setPoints((prev) => [...prev, ""]);
-  const removePoint = (idx: number) => setPoints((prev) => prev.filter((_, i) => i !== idx));
-
-  // Submit form (qui dovresti aggiungere anche la creazione di uno studyBlock associato)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDate) return;
+    if (!selectedDate || !startTime) return;
+    if (!name.trim()) {
+      alert("Please enter a routine name");
+      return;
+    }
 
     const dayOfWeek = getDayOfWeek(selectedDate);
+    const endTime = calculateEndTime(startTime, duration);
 
     const routineData = {
       name,
       description,
-      subject: "",
-      time: time || "",
-      duration: 0,
-      days: [dayOfWeek],
+      studyBlocks: [
+        {
+          subject: "General", // oppure prendi dal form se vuoi
+          dayOfWeek,
+          startTime,
+          endTime,
+          // topic, recommendedMethod, breakInterval, breakDuration se vuoi
+        },
+      ],
+      points: points.filter((p) => p.trim() !== ""),
     };
 
     createMutation.mutate(routineData);
   };
 
-  if (isLoading)
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+  if (isLoading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  if (error) return <div className="p-4 bg-red-100 text-red-700">Error loading routines</div>;
 
-  if (error instanceof Error)
-    return (
-      <div className="p-4 bg-red-100 text-red-700 rounded-lg max-w-md mx-auto mt-8">
-        <h3 className="font-bold text-lg">Errore nel caricamento</h3>
-        <p>{error.message}</p>
-      </div>
-    );
+  function addPoint(event: MouseEvent<HTMLButtonElement, MouseEvent>): void {
+    throw new Error("Function not implemented.");
+  }
+
+  function handlePointChange(idx: number, value: string): void {
+    throw new Error("Function not implemented.");
+  }
+
+  function removePoint(idx: number): void {
+    throw new Error("Function not implemented.");
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
@@ -117,30 +127,29 @@ const RoutinePage = () => {
         {/* Calendar Section */}
         <div className="lg:col-span-1 bg-white rounded-xl shadow-md p-6">
           <h3 className="text-xl font-semibold text-gray-700 mb-4 flex items-center">
-            <FiCalendar className="mr-2" /> Calendario
+            <FiCalendar className="mr-2" /> Calendar
           </h3>
-          <div className="mb-4">
-            <DatePicker
-              selected={selectedDate}
-              onChange={handleDateChange}
-              inline
-              minDate={new Date()}
-              calendarClassName="w-full"
-              className="w-full"
-            />
-          </div>
+          <DatePicker selected={selectedDate} onChange={handleDateChange} inline minDate={new Date()} className="w-full" />
           {selectedDate && (
-            <div className="mt-4">
-              <h4 className="font-medium text-gray-700 mb-2">
-                {selectedDate.toLocaleDateString("it-IT", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                })}
-              </h4>
-              <div className="flex items-center mb-3">
-                <label className="block text-sm font-medium text-gray-700 mr-2">Ora:</label>
-                <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="border border-gray-300 rounded px-2 py-1" />
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="border border-gray-300 rounded px-2 py-1 w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={duration}
+                  onChange={(e) => setDuration(Number(e.target.value))}
+                  className="border border-gray-300 rounded px-2 py-1 w-full"
+                />
               </div>
             </div>
           )}
@@ -149,45 +158,33 @@ const RoutinePage = () => {
         {/* Form Section */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-            <h3 className="text-xl font-semibold text-gray-700 mb-4 flex items-center">
-              {isDaySelected ? (
-                <>
-                  <FiPlus className="mr-2" /> Crea Routine per il{" "}
-                  {selectedDate?.toLocaleDateString("it-IT", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                  })}
-                </>
-              ) : (
-                "Seleziona un giorno dal calendario"
-              )}
+            <h3 className="text-xl font-semibold text-gray-700 mb-4">
+              {isDaySelected ? `Create Routine for ${selectedDate?.toLocaleDateString()}` : "Select a date"}
             </h3>
 
             {isDaySelected && (
               <form className="space-y-4" onSubmit={handleSubmit}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Titolo</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                   <input
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                    placeholder="Es. Routine Mattutina"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    placeholder="Routine name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Descrizione</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                   <textarea
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition h-24"
-                    placeholder="Descrivi la tua routine..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg h-24"
+                    placeholder="Description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    <FiList className="mr-2" /> Punti della Routine
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Steps</label>
                   <div className="space-y-2">
                     <AnimatePresence>
                       {points.map((point, idx) => (
@@ -197,47 +194,32 @@ const RoutinePage = () => {
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: 10 }}
                           className="flex items-center">
-                          <span className="text-gray-500 mr-2">{idx + 1}.</span>
                           <input
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                            placeholder={`Azione ${idx + 1}`}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
+                            placeholder={`Step ${idx + 1}`}
                             value={point}
                             onChange={(e) => handlePointChange(idx, e.target.value)}
                           />
                           {points.length > 1 && (
-                            <button className="ml-2 text-red-500 hover:text-red-700 p-1" type="button" onClick={() => removePoint(idx)}>
+                            <button type="button" onClick={() => removePoint(idx)} className="ml-2 text-red-500 hover:text-red-700 p-1">
                               <FiTrash2 size={16} />
                             </button>
                           )}
                         </motion.div>
                       ))}
                     </AnimatePresence>
-                    <button className="mt-2 flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium" type="button" onClick={addPoint}>
-                      <FiPlus className="mr-1" /> Aggiungi punto
+                    <button type="button" onClick={addPoint} className="mt-2 flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium">
+                      <FiPlus className="mr-1" /> Add Step
                     </button>
                   </div>
                 </div>
                 <button
                   type="submit"
-                  disabled={createMutation.isLoading || !name.trim()}
-                  className={`w-full py-3 px-4 rounded-lg font-medium transition ${
-                    createMutation.isLoading
-                      ? "bg-blue-400 cursor-not-allowed"
-                      : !name.trim()
-                      ? "bg-gray-300 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={createMutation.isLoading}
+                  className={`w-full py-3 px-4 rounded-lg font-medium ${
+                    createMutation.isLoading ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700 text-white"
                   }`}>
-                  {createMutation.isLoading ? (
-                    <span className="flex items-center justify-center">
-                      <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
-                      Creazione in corso...
-                    </span>
-                  ) : (
-                    `Crea Routine per ${selectedDate?.toLocaleDateString("it-IT", {
-                      day: "numeric",
-                      month: "short",
-                    })}`
-                  )}
+                  {createMutation.isLoading ? "Saving..." : "Save Routine"}
                 </button>
               </form>
             )}
@@ -246,54 +228,46 @@ const RoutinePage = () => {
           {/* Routines List */}
           {isDaySelected && (
             <div>
-              <h3 className="text-xl font-semibold text-gray-700 mb-4">
-                Routine per{" "}
-                {selectedDate?.toLocaleDateString("it-IT", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                })}
-              </h3>
+              <h3 className="text-xl font-semibold text-gray-700 mb-4">Routines for {selectedDate?.toLocaleDateString()}</h3>
               {selectedDayRoutines.length === 0 ? (
-                <div className="bg-white rounded-xl shadow-sm p-6 text-center text-gray-500">Nessuna routine programmata per questo giorno.</div>
+                <div className="bg-white rounded-xl shadow-sm p-6 text-center text-gray-500">No routines scheduled for this day</div>
               ) : (
                 <ul className="space-y-4">
                   <AnimatePresence>
-                    {selectedDayRoutines.map((r) => (
+                    {selectedDayRoutines.map((routine) => (
                       <motion.li
-                        key={r.id}
+                        key={routine.id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, x: -20 }}
-                        layout
                         className="bg-white rounded-xl shadow-sm overflow-hidden">
                         <div className="p-5">
                           <div className="flex justify-between items-start">
                             <div>
-                              <h4 className="text-lg font-semibold text-gray-800 mb-1">{r.name}</h4>
-                              {r.studyBlocks?.map((block, i) => (
+                              <h4 className="text-lg font-semibold text-gray-800 mb-1">{routine.name}</h4>
+                              {routine.studyBlocks?.map((block, i) => (
                                 <div key={i} className="flex items-center text-sm text-gray-500 mb-2">
                                   <FiClock className="mr-1" />
-                                  {block.startTime}
+                                  {block.startTime} - {block.endTime}
                                 </div>
                               ))}
-                              <p className="text-gray-600 mb-2">{r.description}</p>
+                              <p className="text-gray-600 mb-2">{routine.description}</p>
                             </div>
                             <button
-                              className="text-gray-400 hover:text-red-500 transition"
-                              disabled={deleteMutation.isLoading}
-                              onClick={() => deleteMutation.mutate(r.id)}>
+                              onClick={() => deleteMutation.mutate(routine.id)}
+                              className="text-gray-400 hover:text-red-500"
+                              disabled={deleteMutation.isLoading}>
                               <FiTrash2 size={18} />
                             </button>
                           </div>
-                          {(r.points ?? []).length > 0 && (
+                          {routine.points && routine.points.length > 0 && (
                             <div className="mt-3">
-                              <span className="text-xs font-medium text-gray-500">ATTIVITÀ:</span>
+                              <span className="text-xs font-medium text-gray-500">STEPS:</span>
                               <ul className="mt-1 space-y-1">
-                                {(r.points ?? []).map((p, i) => (
+                                {routine.points.map((point, i) => (
                                   <li key={i} className="flex items-start">
                                     <span className="text-blue-500 mr-2">•</span>
-                                    <span className="text-gray-700 text-sm">{p}</span>
+                                    <span className="text-gray-700 text-sm">{point}</span>
                                   </li>
                                 ))}
                               </ul>

@@ -253,7 +253,7 @@ const QuizPage = () => {
                     className={`p-3 rounded-lg border cursor-pointer transition-all ${
                       answers[currentQuestionIndex] === oIdx ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
                     }`}>
-                    {opt}
+                    {typeof opt === "string" ? opt : (opt as any)?.optionText || (opt as any)?.text || (opt as any)?.label || ""}{" "}
                   </div>
                 ))}
               </div>

@@ -117,7 +117,7 @@ export interface MindMap {
 }
 
 export interface Routine {
-  points: never[];
+  points: string[];
   date: string;
   id: number;
   title: string;
@@ -156,9 +156,14 @@ export interface FocusSession {
 // --- MindMaps ---
 export const fetchMindMaps = async (): Promise<MindMap[]> => {
   const res = await fetchApi("/maps");
-  return Array.isArray(res) ? res : [];
+  // Mappa description -> content per compatibilità frontend
+  return Array.isArray(res)
+    ? res.map((m: any) => ({
+        ...m,
+        content: m.content ?? m.description ?? "",
+      }))
+    : [];
 };
-
 export const createMindMap = (data: { title: string; content: string }): Promise<MindMap> =>
   fetchApi("/maps", {
     method: "POST",
@@ -176,41 +181,80 @@ export const deleteMindMap = (id: number): Promise<void> =>
   });
 
 // --- Routines ---
+
+export interface StudyBlock {
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+}
+
 export interface Routine {
   id: number;
   name: string;
   description: string;
-  subject?: string;
-  time?: string;
-  duration?: number;
+  subject: string;
+  time: string;
+  duration: number;
   days: string[];
+  points: string[];
+  studyBlocks?: StudyBlock[];
   userId?: number;
   createdAt?: string;
   updatedAt?: string;
 }
 
-export async function fetchRoutines(): Promise<Routine[]> {
+export const fetchRoutines = async (): Promise<Routine[]> => {
   const res = await fetchApi("/routines");
   return Array.isArray(res) ? res : [];
-}
-
-export const addRoutine = async (routine: { name: string; description: string; subject: string; time: string; duration: number; days: string[] }) => {
+};
+export const addRoutine = async (routine: {
+  name: string;
+  description?: string;
+  studyBlocks: Array<{
+    subject: string;
+    topic?: string;
+    dayOfWeek: string;
+    startTime: string;
+    endTime: string;
+    recommendedMethod?: string;
+    breakInterval?: number;
+    breakDuration?: number;
+  }>;
+  points?: string[];
+}): Promise<Routine> => {
   return fetchApi("/routines", {
     method: "POST",
     body: JSON.stringify(routine),
   });
 };
 
-export const deleteRoutine = (id: number): Promise<void> =>
-  fetchApi(`/routines/${id}`, {
+export const deleteRoutine = async (id: number): Promise<void> => {
+  return fetchApi(`/routines/${id}`, {
     method: "DELETE",
   });
-
+};
 // --- Quizzes ---
 // Modifica le interfacce per i tipi di richiesta
 export interface CreateQuizRequest {
   title: string;
-  questions: QuizQuestion[];
+  description?: string;
+  subject?: string;
+  topic?: string;
+  quizType: string; // es: "MULTIPLE_CHOICE"
+  adaptive?: boolean;
+  timeLimit?: number;
+  questions: {
+    questionText: string;
+    questionType: string; // es: "MULTIPLE_CHOICE"
+    difficulty?: number;
+    points?: number;
+    explanation?: string;
+    correctAnswer?: string;
+    options: {
+      optionText: string;
+      isCorrect: boolean;
+    }[];
+  }[];
 }
 
 export interface QuizResponse {

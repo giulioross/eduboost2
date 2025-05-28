@@ -78,26 +78,36 @@ const QuizAdminPage = () => {
       toast.error("Inserisci un titolo per il quiz");
       return;
     }
-
-    const hasEmptyQuestions = questions.some((q) => !q.question.trim());
-    const hasInvalidOptions = questions.some((q) => q.options.length !== 4 || q.options.some((opt) => !opt.trim()));
-
-    if (hasEmptyQuestions || hasInvalidOptions) {
-      toast.error("Tutte le domande devono avere testo e 4 opzioni valide");
+    if (questions.some((q) => !q.question.trim() || q.options.length !== 4 || q.options.some((opt) => !opt.trim()))) {
+      toast.error("Tutte le domande devono avere testo e 4 opzioni compilate");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      await createQuizMutation.mutateAsync({
+      const quizData = {
         title,
-        questions,
-      });
+        quizType: "MULTIPLE_CHOICE", // o altro tipo se vuoi
+        questions: questions.map((q) => ({
+          questionText: q.question,
+          questionType: "MULTIPLE_CHOICE",
+          options: q.options.map((opt, idx) => ({
+            optionText: opt,
+            isCorrect: idx === q.correctIndex,
+          })),
+        })),
+      };
+
+      await createQuizWithQuestions(quizData);
 
       setTitle("");
       setQuestions([emptyQuestion()]);
+      setViewMode("list");
+      toast.success("Quiz creato con successo!");
       loadQuizzes();
+    } catch (error) {
+      toast.error("Errore durante la creazione del quiz");
     } finally {
       setIsSubmitting(false);
     }
