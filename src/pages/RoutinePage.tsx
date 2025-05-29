@@ -1,24 +1,14 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "react-query";
-import { fetchRoutines, addRoutine, deleteRoutine, Routine } from "../services/api";
+import { fetchRoutines, addRoutine, deleteRoutine, Routine, StudyBlock } from "../services/api";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiPlus, FiTrash2, FiCalendar, FiList, FiClock } from "react-icons/fi";
 
-type DayOfWeek = "SUNDAY" | "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY";
-
-type StudyBlock = {
-  id?: number;
-  dayOfWeek: DayOfWeek;
-  startTime: string;
-  endTime: string;
-};
-
 type RoutineWithBlocks = Routine & { studyBlocks?: StudyBlock[] };
-
-const getDayOfWeek = (date: Date): DayOfWeek => {
-  const days: DayOfWeek[] = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+const getDayOfWeek = (date: Date): StudyBlock["dayOfWeek"] => {
+  const days: StudyBlock["dayOfWeek"][] = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
   return days[date.getDay()];
 };
 
@@ -44,7 +34,29 @@ const RoutinePage = () => {
   const routines: RoutineWithBlocks[] = Array.isArray(data) ? data : [];
 
   const selectedDayOfWeek = selectedDate ? getDayOfWeek(selectedDate) : null;
-  const selectedDayRoutines = routines.filter((routine) => routine.studyBlocks?.some((block) => block.dayOfWeek === selectedDayOfWeek));
+  const selectedDateISO = selectedDate ? selectedDate.toISOString().slice(0, 10) : null;
+
+  // Mostra routine che hanno uno studyBlock con la data esatta OPPURE con il dayOfWeek selezionato
+  const selectedDayRoutines = routines.filter((routine) =>
+    routine.studyBlocks?.some((block) => {
+      // Normalizza la data del block e la data selezionata a "YYYY-MM-DD"
+      let blockDate: string | null = null;
+      if (block.date) {
+        try {
+          // Se è una stringa ISO, estrai la parte "YYYY-MM-DD"
+          blockDate = new Date(block.date).toISOString().slice(0, 10);
+        } catch {
+          blockDate = typeof block.date === "string" ? block.date.slice(0, 10) : null;
+        }
+      }
+      // Se la routine ha una data esatta, confronta la data
+      if (blockDate && selectedDateISO) {
+        return blockDate === selectedDateISO;
+      }
+      // Altrimenti fallback al dayOfWeek
+      return !blockDate && block.dayOfWeek === selectedDayOfWeek;
+    })
+  );
 
   const createMutation = useMutation(addRoutine, {
     onSuccess: () => {
@@ -93,11 +105,11 @@ const RoutinePage = () => {
       description,
       studyBlocks: [
         {
-          subject: "General", // oppure prendi dal form se vuoi
+          subject: "General",
           dayOfWeek,
+          date: selectedDate.toISOString().slice(0, 10), // Salva anche la data esatta!
           startTime,
           endTime,
-          // topic, recommendedMethod, breakInterval, breakDuration se vuoi
         },
       ],
       points: points.filter((p) => p.trim() !== ""),
@@ -106,20 +118,21 @@ const RoutinePage = () => {
     createMutation.mutate(routineData);
   };
 
+  // Gestione punti (steps)
+  function addPoint() {
+    setPoints((prev) => [...prev, ""]);
+  }
+
+  function handlePointChange(idx: number, value: string) {
+    setPoints((prev) => prev.map((p, i) => (i === idx ? value : p)));
+  }
+
+  function removePoint(idx: number) {
+    setPoints((prev) => prev.filter((_, i) => i !== idx));
+  }
+
   if (isLoading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
   if (error) return <div className="p-4 bg-red-100 text-red-700">Error loading routines</div>;
-
-  function addPoint(event: React.MouseEvent<HTMLButtonElement>): void {
-    throw new Error("Function not implemented.");
-  }
-
-  function handlePointChange(idx: number, value: string): void {
-    throw new Error("Function not implemented.");
-  }
-
-  function removePoint(idx: number): void {
-    throw new Error("Function not implemented.");
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">

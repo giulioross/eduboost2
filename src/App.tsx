@@ -13,6 +13,7 @@ import QuizAdminPage from "./pages/QuizAdminPage";
 import FocusHistory from "./pages/FocusHistory";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import { TimerProvider } from "./pages/TimerContext";
 
 function App() {
   const location = useLocation();
@@ -36,26 +37,28 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {!isLoginOrRegisterPage && <Navbar />}
-      <main className="flex-1">
-        <Routes>
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/" element={token ? <DashboardPage /> : <Navigate to="/login" replace />} />
-          <Route path="/home" element={token ? <HomePage /> : <Navigate to="/login" replace />} />
-          <Route path="/dashboard" element={token ? <DashboardPage /> : <Navigate to="/login" replace />} />
-          <Route path="/routines" element={token ? <RoutinePage /> : <Navigate to="/login" replace />} />
-          <Route path="/mental-maps" element={token ? <MindMap /> : <Navigate to="/login" replace />} />
-          <Route path="/quizzes" element={token ? <QuizPage /> : <Navigate to="/login" replace />} />
-          <Route path="/quiz-admin" element={token ? <QuizAdminPage /> : <Navigate to="/login" replace />} />
-          <Route path="/focus" element={token ? <FocusModePage /> : <Navigate to="/login" replace />} />
-          <Route path="/focus-history" element={token ? <FocusHistory /> : <Navigate to="/login" replace />} />
-          <Route path="/profile" element={token ? <ProfilePage /> : <Navigate to="/login" replace />} />
-        </Routes>
-      </main>
-      {!isLoginOrRegisterPage && <Footer />}
-    </div>
+    <TimerProvider>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        {!isLoginOrRegisterPage && <Navbar />}
+        <main className="flex-1">
+          <Routes>
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/" element={token ? <DashboardPage /> : <Navigate to="/login" replace />} />
+            <Route path="/home" element={token ? <HomePage /> : <Navigate to="/login" replace />} />
+            <Route path="/dashboard" element={token ? <DashboardPage /> : <Navigate to="/login" replace />} />
+            <Route path="/routines" element={token ? <RoutinePage /> : <Navigate to="/login" replace />} />
+            <Route path="/mental-maps" element={token ? <MindMap /> : <Navigate to="/login" replace />} />
+            <Route path="/quizzes" element={token ? <QuizPage /> : <Navigate to="/login" replace />} />
+            <Route path="/quiz-admin" element={token ? <QuizAdminPage /> : <Navigate to="/login" replace />} />
+            <Route path="/focus" element={token ? <FocusModePage /> : <Navigate to="/login" replace />} />
+            <Route path="/focus-history" element={token ? <FocusHistory /> : <Navigate to="/login" replace />} />
+            <Route path="/profile" element={token ? <ProfilePage /> : <Navigate to="/login" replace />} />
+          </Routes>
+        </main>
+        {!isLoginOrRegisterPage && <Footer />}
+      </div>
+    </TimerProvider>
   );
 }
 

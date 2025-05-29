@@ -1,104 +1,127 @@
-// contexts/TimerContext.tsx
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useRef, useEffect } from "react";
+
+type TimerStatus = "WORK" | "BREAK";
+type TimerMode = "POMODORO" | "DEEP_WORK" | "CUSTOM";
 
 interface TimerContextType {
+  mode: TimerMode;
+  setMode: (m: TimerMode) => void;
+  status: TimerStatus;
+  setStatus: (s: TimerStatus) => void;
+  duration: number;
+  setDuration: (d: number) => void;
   secondsLeft: number;
+  setSecondsLeft: (s: number) => void;
   isRunning: boolean;
-  mode: string;
-  status: string;
-  startTimer: (duration: number, mode: string, status: string) => void;
+  setIsRunning: (r: boolean) => void;
+  startTime: Date | null;
+  setStartTime: (d: Date | null) => void;
+  startTimer: () => void;
   pauseTimer: () => void;
   resetTimer: () => void;
 }
 
 const TimerContext = createContext<TimerContextType | undefined>(undefined);
 
+export const useTimer = () => {
+  const ctx = useContext(TimerContext);
+  if (!ctx) throw new Error("useTimer must be used within TimerProvider");
+  return ctx;
+};
+
 export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [secondsLeft, setSecondsLeft] = useState(0);
+  const [mode, setMode] = useState<TimerMode>("POMODORO");
+  const [status, setStatus] = useState<TimerStatus>("WORK");
+  const [duration, setDuration] = useState(25);
+  const [secondsLeft, setSecondsLeft] = useState(duration * 60);
   const [isRunning, setIsRunning] = useState(false);
-  const [mode, setMode] = useState("");
-  const [status, setStatus] = useState("");
-  const [duration, setDuration] = useState(0);
+  const [startTime, setStartTime] = useState<Date | null>(null);
 
+  const intervalRef = useRef<number | null>(null);
+
+  // Persist timer state in localStorage
   useEffect(() => {
-    if (!isRunning) return;
-
-    const interval = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setIsRunning(false);
-          // Aggiungi qui eventuali azioni al completamento
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
+    if (isRunning) {
+      intervalRef.current = setInterval(() => {
+        setSecondsLeft((s) => {
+          if (s <= 1) {
+            setIsRunning(false);
+            clearInterval(intervalRef.current!);
+            return 0;
+          }
+          return s - 1;
+        });
+      }, 1000);
+    } else if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [isRunning]);
 
-  const startTimer = (dur: number, mod: string, stat: string) => {
-    setDuration(dur);
-    setMode(mod);
-    setStatus(stat);
-    setSecondsLeft(dur * 60);
+  // Aggiorna secondsLeft quando cambia la durata (solo se non sta andando)
+  useEffect(() => {
+    if (!isRunning) setSecondsLeft(duration * 60);
+  }, [duration, isRunning]);
+
+  // Salva stato su localStorage
+  useEffect(() => {
+    localStorage.setItem(
+      "focus-timer",
+      JSON.stringify({ mode, status, duration, secondsLeft, isRunning, startTime: startTime ? startTime.toISOString() : null })
+    );
+  }, [mode, status, duration, secondsLeft, isRunning, startTime]);
+
+  // Recupera stato da localStorage all'avvio
+  useEffect(() => {
+    const saved = localStorage.getItem("focus-timer");
+    if (saved) {
+      try {
+        const obj = JSON.parse(saved);
+        setMode(obj.mode || "POMODORO");
+        setStatus(obj.status || "WORK");
+        setDuration(obj.duration || 25);
+        setSecondsLeft(obj.secondsLeft ?? (obj.duration || 25) * 60);
+        setIsRunning(obj.isRunning || false);
+        setStartTime(obj.startTime ? new Date(obj.startTime) : null);
+      } catch {}
+    }
+  }, []);
+
+  const startTimer = () => {
+    setStartTime(new Date());
     setIsRunning(true);
   };
 
-  const pauseTimer = () => {
-    setIsRunning(false);
-  };
+  const pauseTimer = () => setIsRunning(false);
 
   const resetTimer = () => {
     setIsRunning(false);
     setSecondsLeft(duration * 60);
+    setStartTime(null);
   };
 
   return (
     <TimerContext.Provider
       value={{
-        secondsLeft,
-        isRunning,
         mode,
+        setMode,
         status,
+        setStatus,
+        duration,
+        setDuration,
+        secondsLeft,
+        setSecondsLeft,
+        isRunning,
+        setIsRunning,
+        startTime,
+        setStartTime,
         startTimer,
         pauseTimer,
         resetTimer,
       }}>
       {children}
-      <GlobalTimerOverlay />
     </TimerContext.Provider>
   );
-};
-
-const GlobalTimerOverlay = () => {
-  const timer = useContext(TimerContext);
-
-  if (!timer || timer.secondsLeft <= 0) return null;
-
-  const minutes = Math.floor(timer.secondsLeft / 60);
-  const seconds = timer.secondsLeft % 60;
-
-  return (
-    <div className="fixed bottom-4 right-4 z-50">
-      <div className="bg-white p-3 rounded-lg shadow-xl border border-gray-200 flex items-center">
-        <div className={`w-3 h-3 rounded-full mr-2 ${timer.isRunning ? "bg-green-500 animate-pulse" : "bg-yellow-500"}`}></div>
-        <div className="font-mono text-lg">
-          {minutes}:{seconds < 10 ? `0${seconds}` : seconds}
-        </div>
-        <div className="ml-2 text-sm text-gray-600 capitalize">
-          {timer.mode} • {timer.status}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export const useTimer = () => {
-  const context = useContext(TimerContext);
-  if (context === undefined) {
-    throw new Error("useTimer must be used within a TimerProvider");
-  }
-  return context;
 };

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface SignupRequest {
   username: string;
@@ -7,7 +8,7 @@ interface SignupRequest {
   firstName: string;
   lastName: string;
   userType: string;
-  roles: string[]; // deve essere sempre presente come array
+  roles: string[];
 }
 
 const RegisterPage: React.FC = () => {
@@ -17,15 +18,16 @@ const RegisterPage: React.FC = () => {
     password: "",
     firstName: "",
     lastName: "",
-    userType: "HIGH_SCHOOL_STUDENT", // valore di default corretto
-    roles: ["ROLE_USER"], // ruoli richiesti dal backend
+    userType: "HIGH_SCHOOL_STUDENT",
+    roles: ["ROLE_USER"],
   });
 
   const [message, setMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-
     setForm((prevForm) => ({
       ...prevForm,
       [name]: value,
@@ -35,6 +37,7 @@ const RegisterPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
+    setLoading(true);
 
     try {
       const response = await fetch("http://localhost:8080/api/auth/signup", {
@@ -46,14 +49,18 @@ const RegisterPage: React.FC = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setMessage(data.message || "Registrazione completata con successo!");
+        setMessage("Registrazione completata con successo! Verrai reindirizzato al login...");
+        setTimeout(() => {
+          navigate("/login");
+        }, 1500);
       } else {
         const errorData = await response.json();
         setMessage(errorData.message || "Errore durante la registrazione.");
       }
     } catch (error) {
       setMessage("Errore di connessione al server.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -105,8 +112,8 @@ const RegisterPage: React.FC = () => {
           <option value="OTHER">Altro</option>
         </select>
 
-        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-          Registrati
+        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700" disabled={loading}>
+          {loading ? "Registrazione in corso..." : "Registrati"}
         </button>
       </form>
     </div>

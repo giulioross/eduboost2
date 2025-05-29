@@ -183,6 +183,7 @@ export const deleteMindMap = (id: number): Promise<void> =>
 // --- Routines ---
 
 export interface StudyBlock {
+  date: unknown;
   dayOfWeek: string;
   startTime: string;
   endTime: string;

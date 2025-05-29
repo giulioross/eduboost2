@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { saveFocusSession, getRecentSessions, FocusSession } from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiPlay, FiPause, FiRefreshCw, FiClock, FiZap, FiCoffee } from "react-icons/fi";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
+import { useTimer } from "./TimerContext";
 
 const MODES = [
   { label: "Pomodoro", value: "POMODORO", duration: 25, color: "#EF4444" },
@@ -18,14 +19,26 @@ const STATUS = [
 ];
 
 const FocusModePage: React.FC = () => {
-  const [mode, setMode] = useState<"POMODORO" | "DEEP_WORK" | "CUSTOM">("POMODORO");
-  const [status, setStatus] = useState<"WORK" | "BREAK">("WORK");
-  const [duration, setDuration] = useState(25);
-  const [secondsLeft, setSecondsLeft] = useState(duration * 60);
-  const [isRunning, setIsRunning] = useState(false);
-  const [showEnd, setShowEnd] = useState(false);
-  const [startTime, setStartTime] = useState<Date | null>(null);
-  const [showSessionModal, setShowSessionModal] = useState(false);
+  const {
+    mode,
+    setMode,
+    status,
+    setStatus,
+    duration,
+    setDuration,
+    secondsLeft,
+    setSecondsLeft,
+    isRunning,
+    setIsRunning,
+    startTime,
+    setStartTime,
+    startTimer,
+    pauseTimer,
+    resetTimer,
+  } = useTimer();
+
+  const [showEnd, setShowEnd] = React.useState(false);
+  const [showSessionModal, setShowSessionModal] = React.useState(false);
 
   const queryClient = useQueryClient();
   const { data: sessions = [] } = useQuery<FocusSession[]>("focusSessions", getRecentSessions);
@@ -39,26 +52,13 @@ const FocusModePage: React.FC = () => {
     },
   });
 
-  // Set initial duration based on mode
-  useEffect(() => {
-    const selectedMode = MODES.find((m) => m.value === mode);
-    if (selectedMode) {
-      setDuration(selectedMode.duration);
-      setSecondsLeft(selectedMode.duration * 60);
-    }
-  }, [mode]);
-
-  // Countdown logic
-  useEffect(() => {
+  // Countdown end logic
+  React.useEffect(() => {
     if (!isRunning) return;
-
     if (secondsLeft <= 0) {
       handleSessionEnd();
-      return;
     }
-
-    const interval = setInterval(() => setSecondsLeft((s) => s - 1), 1000);
-    return () => clearInterval(interval);
+    // eslint-disable-next-line
   }, [isRunning, secondsLeft]);
 
   const handleSessionEnd = () => {
@@ -81,7 +81,7 @@ const FocusModePage: React.FC = () => {
       const audio = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3");
       audio.play();
     } catch (e) {
-      console.error("Error playing sound:", e);
+      // Silently ignore
     }
   };
 
