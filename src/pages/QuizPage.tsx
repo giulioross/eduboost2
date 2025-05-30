@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "react-query";
 import { fetchQuizzes, Quiz } from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiChevronRight, FiAward, FiClock, FiList, FiAlertTriangle } from "react-icons/fi";
+import { FiChevronRight, FiAward, FiClock, FiList, FiAlertTriangle, FiDownload } from "react-icons/fi";
 import Confetti from "react-confetti";
 import useWindowSize from "react-use/lib/useWindowSize";
 import { toast } from "react-hot-toast";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+
 export interface SubmitQuizResultInput {
   quizId: number;
   score: number;
@@ -16,6 +19,7 @@ export interface SubmitQuizResultInput {
 export async function submitQuizResult(input: SubmitQuizResultInput): Promise<any> {
   // implementation
 }
+
 const QuizPage = () => {
   const { width, height } = useWindowSize();
   const queryClient = useQueryClient();
@@ -25,6 +29,7 @@ const QuizPage = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const quizRef = useRef<HTMLDivElement>(null);
 
   const {
     data: quizzes = [],
@@ -125,6 +130,24 @@ const QuizPage = () => {
     setCurrentQuestionIndex(index);
   };
 
+  // --- PDF EXPORT ---
+  const exportQuizAsPDF = async () => {
+    if (!quizRef.current) return;
+    const element = quizRef.current;
+    const prevOverflow = element.style.overflow;
+    element.style.overflow = "visible";
+    const canvas = await html2canvas(element, { backgroundColor: "#fff", scale: 2 });
+    element.style.overflow = prevOverflow;
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "px",
+      format: [canvas.width, canvas.height],
+    });
+    pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
+    pdf.save(`${selectedQuiz?.title || "quiz"}.pdf`);
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh]">
@@ -202,13 +225,12 @@ const QuizPage = () => {
   }
 
   const currentQuestion = selectedQuiz.questions[currentQuestionIndex];
-  const progress = ((currentQuestionIndex + 1) / selectedQuiz.questions.length) * 100;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       {showConfetti && <Confetti width={width} height={height} recycle={false} numberOfPieces={500} />}
 
-      <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+      <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200" ref={quizRef} id="quiz-to-export">
         {/* Header */}
         <div className="p-6 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
           <div className="flex justify-between items-start">
@@ -225,9 +247,17 @@ const QuizPage = () => {
                 </div>
               </div>
             </div>
-            <button onClick={resetQuiz} className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30">
-              Esci
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={exportQuizAsPDF}
+                title="Salva quiz come PDF"
+                className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 flex items-center gap-1">
+                <FiDownload /> PDF
+              </button>
+              <button onClick={resetQuiz} className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30">
+                Esci
+              </button>
+            </div>
           </div>
         </div>
 

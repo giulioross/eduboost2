@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "react-query";
 import { fetchMindMaps, createMindMap, deleteMindMap, MindMap as MindMapType } from "../services/api";
 import ReactFlow, {
@@ -208,9 +208,9 @@ const MindMapEditor: React.FC<{
 };
 
 // Componente per visualizzare la mappa mentale
-const MindMapViewer: React.FC<{ nodes: Node[]; edges: Edge[] }> = ({ nodes, edges }) => {
+const MindMapViewer: React.FC<{ nodes: Node[]; edges: Edge[]; exportRef?: React.RefObject<HTMLDivElement> }> = ({ nodes, edges, exportRef }) => {
   return (
-    <div className="h-[500px] border rounded-lg">
+    <div className="h-[500px] border rounded-lg bg-white" ref={exportRef} id="mindmap-viewer">
       <ReactFlow nodes={nodes} edges={edges} fitView>
         <Controls />
         <MiniMap />
@@ -267,10 +267,17 @@ const textToNodesEdges = (content: string) => {
 };
 
 // Funzione per esportare la mappa mentale come PDF
-const exportMapAsPDF = async () => {
-  const mapElement = document.getElementById("mindmap-viewer");
-  if (!mapElement) return;
-  const canvas = await html2canvas(mapElement, { backgroundColor: "#fff" });
+const exportMapAsPDF = async (ref: React.RefObject<HTMLDivElement>) => {
+  const mapElement = ref.current;
+  if (!mapElement) {
+    alert("Impossibile trovare la mappa da esportare.");
+    return;
+  }
+  // Rimuovi temporaneamente overflow per evitare tagli
+  const prevOverflow = mapElement.style.overflow;
+  mapElement.style.overflow = "visible";
+  const canvas = await html2canvas(mapElement, { backgroundColor: "#fff", useCORS: true, scale: 2 });
+  mapElement.style.overflow = prevOverflow;
   const imgData = canvas.toDataURL("image/png");
   const pdf = new jsPDF({
     orientation: "landscape",
@@ -289,6 +296,7 @@ const MindMap: React.FC = () => {
   const [editorEdges, setEditorEdges] = useState<Edge[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const exportRef = useRef<HTMLDivElement>(null);
 
   const { data: mindmaps = [], isLoading, error } = useQuery<MindMapType[]>("mindmaps", fetchMindMaps);
 
@@ -442,7 +450,7 @@ const MindMap: React.FC = () => {
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-semibold text-xl">{selectedMap.title}</h3>
                 <div className="flex gap-2">
-                  <button onClick={exportMapAsPDF} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                  <button onClick={() => exportMapAsPDF(exportRef)} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
                     Esporta PDF
                   </button>
                   <button onClick={() => handleEditMap(selectedMap)} className="text-blue-500 hover:text-blue-700">
@@ -450,7 +458,7 @@ const MindMap: React.FC = () => {
                   </button>
                 </div>
               </div>
-              <div id="mindmap-viewer">
+              <div ref={exportRef}>
                 <MindMapViewer nodes={viewNodes} edges={viewEdges} />
               </div>
             </section>
