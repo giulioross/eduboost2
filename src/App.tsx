@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate, useNavigate } from "react-router-dom";
 import Footer from "./layout/Footer";
 import Navbar from "./layout/Navbar";
 import HomePage from "./pages/HomePage";
@@ -17,6 +17,7 @@ import { TimerProvider } from "./pages/TimerContext";
 
 function App() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [token, setToken] = useState(() => localStorage.getItem("token"));
   const isLoginOrRegisterPage = location.pathname === "/login" || location.pathname === "/register";
 
@@ -36,6 +37,13 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
+  // Se non autenticato, forza sempre la pagina di login all'avvio
+  useEffect(() => {
+    if (!token && location.pathname !== "/login" && location.pathname !== "/register") {
+      navigate("/login", { replace: true });
+    }
+  }, [token, location.pathname, navigate]);
+
   return (
     <TimerProvider>
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -44,6 +52,7 @@ function App() {
           <Routes>
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} />
+            {/* Tutte le altre rotte sono protette */}
             <Route path="/" element={token ? <DashboardPage /> : <Navigate to="/login" replace />} />
             <Route path="/home" element={token ? <HomePage /> : <Navigate to="/login" replace />} />
             <Route path="/dashboard" element={token ? <DashboardPage /> : <Navigate to="/login" replace />} />
@@ -54,6 +63,8 @@ function App() {
             <Route path="/focus" element={token ? <FocusModePage /> : <Navigate to="/login" replace />} />
             <Route path="/focus-history" element={token ? <FocusHistory /> : <Navigate to="/login" replace />} />
             <Route path="/profile" element={token ? <ProfilePage /> : <Navigate to="/login" replace />} />
+            {/* Catch-all: se non autenticato, vai a login */}
+            <Route path="*" element={<Navigate to={token ? "/" : "/login"} replace />} />
           </Routes>
         </main>
         {!isLoginOrRegisterPage && <Footer />}
