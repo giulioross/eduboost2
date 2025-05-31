@@ -24,7 +24,7 @@ const Navbar: React.FC = () => {
       <div className="container-custom">
         <div className="flex items-center justify-between">
           {/* Logo e titolo: link alla dashboard */}
-          <Link to="/dashboard" className="flex items-center space-x-2 group">
+          <Link to="/home" className="flex items-center space-x-2 group">
             <span className="text-primary-600 group-hover:scale-110 transition-transform">
               <Brain size={32} />
             </span>
