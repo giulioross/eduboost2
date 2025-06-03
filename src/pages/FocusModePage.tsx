@@ -1,11 +1,22 @@
 import React from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
-import { saveFocusSession, getRecentSessions, FocusSession } from "../services/api";
+import { getRecentSessions, saveFocusSession } from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiPlay, FiPause, FiRefreshCw, FiClock, FiZap, FiCoffee } from "react-icons/fi";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { useTimer } from "./TimerContext";
+
+// Define the FocusSession type if not imported from elsewhere
+type FocusSession = {
+  id: number;
+  duration: number;
+  status: "WORK" | "BREAK";
+  startTime: string;
+  endTime: string;
+  mode: string;
+  userId: number;
+};
 
 const MODES = [
   { label: "Pomodoro", value: "POMODORO", duration: 25, color: "#EF4444" },
@@ -86,8 +97,17 @@ const FocusModePage: React.FC = () => {
   };
 
   const handleStart = () => {
-    setStartTime(new Date());
-    setSecondsLeft(duration * 60);
+    // Se il timer è già stato avviato (cioè secondsLeft < durata*60), NON resettare il tempo
+    if (!isRunning && secondsLeft > 0 && secondsLeft !== duration * 60) {
+      setIsRunning(true);
+      setShowEnd(false);
+      return;
+    }
+
+    // Altrimenti, è una nuova sessione
+    if (secondsLeft === duration * 60) {
+      setStartTime(new Date());
+    }
     setIsRunning(true);
     setShowEnd(false);
   };
@@ -196,7 +216,7 @@ const FocusModePage: React.FC = () => {
                   whileTap={{ scale: 0.95 }}
                   className="px-6 py-3 bg-green-600 text-white rounded-full font-medium flex items-center shadow-lg"
                   onClick={handleStart}>
-                  <FiPlay className="mr-2" /> Inizia
+                  <FiPlay className="mr-2" /> {secondsLeft !== duration * 60 ? "Riprendi" : "Inizia"}
                 </motion.button>
               ) : (
                 <>

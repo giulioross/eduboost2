@@ -143,13 +143,13 @@ export interface Quiz {
   updatedAt?: string;
 }
 
-export interface FocusSession {
+interface FocusSession {
   id: number;
   userId: number;
   duration: number;
   startTime: string;
   endTime: string;
-  mode: "POMODORO" | "CUSTOM";
+  mode: "POMODORO" | "CUSTOM" | "DEEP_WORK";
   status: "WORK" | "BREAK";
 }
 

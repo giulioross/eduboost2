@@ -1,14 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "react-query";
 import { fetchQuizzes, Quiz } from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiChevronRight, FiAward, FiClock, FiList, FiAlertTriangle, FiDownload, FiCheck, FiX } from "react-icons/fi";
+import { FiChevronRight, FiAward, FiClock, FiList, FiAlertTriangle } from "react-icons/fi";
 import Confetti from "react-confetti";
 import useWindowSize from "react-use/lib/useWindowSize";
 import { toast } from "react-hot-toast";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-
 export interface SubmitQuizResultInput {
   quizId: number;
   score: number;
@@ -19,7 +16,6 @@ export interface SubmitQuizResultInput {
 export async function submitQuizResult(input: SubmitQuizResultInput): Promise<any> {
   // implementation
 }
-
 const QuizPage = () => {
   const { width, height } = useWindowSize();
   const queryClient = useQueryClient();
@@ -29,9 +25,6 @@ const QuizPage = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [showReview, setShowReview] = useState(false);
-  const [reviewQuestions, setReviewQuestions] = useState<any[]>([]);
-  const quizRef = useRef<HTMLDivElement>(null);
 
   const {
     data: quizzes = [],
@@ -73,7 +66,6 @@ const QuizPage = () => {
     setScore(null);
     setTimeSpent(0);
     setCurrentQuestionIndex(0);
-    setShowReview(false);
   };
 
   const handleAnswer = (qIdx: number, optIdx: number) => {
@@ -81,6 +73,7 @@ const QuizPage = () => {
     newAnswers[qIdx] = optIdx;
     setAnswers(newAnswers);
 
+    // Auto-advance to next question if not last
     if (qIdx < selectedQuiz!.questions.length - 1) {
       setTimeout(() => {
         setCurrentQuestionIndex(qIdx + 1);
@@ -104,18 +97,6 @@ const QuizPage = () => {
 
       setScore(s);
 
-      // Calcola le domande sbagliate per la revisione
-      const wrongAnswers = selectedQuiz.questions
-        .map((q, i) => ({
-          question: q,
-          userAnswer: answers[i],
-          isCorrect: answers[i] === q.correctIndex,
-          questionIndex: i,
-        }))
-        .filter((item) => !item.isCorrect);
-
-      setReviewQuestions(wrongAnswers);
-
       if (s === selectedQuiz.questions.length) {
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 5000);
@@ -138,35 +119,10 @@ const QuizPage = () => {
     setAnswers([]);
     setTimeSpent(0);
     setCurrentQuestionIndex(0);
-    setShowReview(false);
   };
 
   const goToQuestion = (index: number) => {
     setCurrentQuestionIndex(index);
-  };
-
-  const toggleReview = () => {
-    setShowReview(!showReview);
-    if (!showReview) {
-      setCurrentQuestionIndex(0);
-    }
-  };
-
-  const exportQuizAsPDF = async () => {
-    if (!quizRef.current) return;
-    const element = quizRef.current;
-    const prevOverflow = element.style.overflow;
-    element.style.overflow = "visible";
-    const canvas = await html2canvas(element, { backgroundColor: "#fff", scale: 2 });
-    element.style.overflow = prevOverflow;
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "px",
-      format: [canvas.width, canvas.height],
-    });
-    pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
-    pdf.save(`${selectedQuiz?.title || "quiz"}.pdf`);
   };
 
   if (isLoading) {
@@ -246,15 +202,13 @@ const QuizPage = () => {
   }
 
   const currentQuestion = selectedQuiz.questions[currentQuestionIndex];
-  const correctAnswers = score !== null ? score : 0;
-  const wrongAnswers = score !== null ? selectedQuiz.questions.length - score : 0;
-  const percentage = score !== null ? Math.round((score / selectedQuiz.questions.length) * 100) : 0;
+  const progress = ((currentQuestionIndex + 1) / selectedQuiz.questions.length) * 100;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       {showConfetti && <Confetti width={width} height={height} recycle={false} numberOfPieces={500} />}
 
-      <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200" ref={quizRef} id="quiz-to-export">
+      <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
         {/* Header */}
         <div className="p-6 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
           <div className="flex justify-between items-start">
@@ -271,154 +225,93 @@ const QuizPage = () => {
                 </div>
               </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={exportQuizAsPDF}
-                title="Salva quiz come PDF"
-                className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30 flex items-center gap-1">
-                <FiDownload /> PDF
-              </button>
-              <button onClick={resetQuiz} className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30">
-                Esci
-              </button>
-            </div>
+            <button onClick={resetQuiz} className="px-3 py-1 bg-white/20 rounded-lg hover:bg-white/30">
+              Esci
+            </button>
           </div>
         </div>
 
         {/* Quiz Content */}
-        {score === null ? (
-          <div className="p-6">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentQuestionIndex}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="mb-8">
-                <div className="font-semibold text-lg mb-3 text-gray-800">
-                  <span className="text-blue-600">Domanda {currentQuestionIndex + 1}:</span> {currentQuestion.question}
-                </div>
-
-                <div className="space-y-3">
-                  {currentQuestion.options.map((opt, oIdx) => (
-                    <div
-                      key={oIdx}
-                      onClick={() => handleAnswer(currentQuestionIndex, oIdx)}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                        answers[currentQuestionIndex] === oIdx ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
-                      }`}>
-                      {typeof opt === "string" ? opt : (opt as any)?.optionText || (opt as any)?.text || (opt as any)?.label || ""}
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            </AnimatePresence>
-
-            {/* Navigation */}
-            <div className="flex justify-between items-center mt-8">
-              <button
-                onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
-                disabled={currentQuestionIndex === 0}
-                className={`px-4 py-2 rounded-lg ${
-                  currentQuestionIndex === 0 ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}>
-                Precedente
-              </button>
-
-              {currentQuestionIndex < selectedQuiz.questions.length - 1 ? (
-                <button
-                  onClick={() => setCurrentQuestionIndex((prev) => prev + 1)}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                  Successiva
-                </button>
-              ) : (
-                <button
-                  onClick={submitQuiz}
-                  disabled={answers.every((a) => a === -1)}
-                  className={`px-6 py-2 rounded-lg text-white ${
-                    answers.every((a) => a === -1) ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
-                  }`}>
-                  Completa Quiz
-                </button>
-              )}
-            </div>
-
-            {/* Question Indicators */}
-            <div className="flex flex-wrap gap-2 mt-6">
-              {selectedQuiz.questions.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => goToQuestion(idx)}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                    answers[idx] !== -1 ? "bg-blue-500 text-white" : idx === currentQuestionIndex ? "bg-gray-200" : "bg-gray-100 hover:bg-gray-200"
-                  }`}>
-                  {idx + 1}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : showReview ? (
-          <div className="p-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-              <FiAlertTriangle className="text-yellow-500 mr-2" />
-              Revisione domande sbagliate ({reviewQuestions.length})
-            </h3>
-
-            <div className="mb-8">
+        <div className="p-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentQuestionIndex}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="mb-8">
               <div className="font-semibold text-lg mb-3 text-gray-800">
-                <span className="text-blue-600">Domanda {currentQuestionIndex + 1}:</span> {reviewQuestions[currentQuestionIndex].question.question}
+                <span className="text-blue-600">Domanda {currentQuestionIndex + 1}:</span> {currentQuestion.question}
               </div>
 
               <div className="space-y-3">
-                {reviewQuestions[currentQuestionIndex].question.options.map((opt: any, oIdx: number) => (
+                {currentQuestion.options.map((opt, oIdx) => (
                   <div
                     key={oIdx}
-                    className={`p-3 rounded-lg border ${
-                      oIdx === reviewQuestions[currentQuestionIndex].question.correctIndex
-                        ? "border-green-500 bg-green-50"
-                        : oIdx === reviewQuestions[currentQuestionIndex].userAnswer
-                        ? "border-red-500 bg-red-50"
-                        : "border-gray-200"
+                    onClick={() => handleAnswer(currentQuestionIndex, oIdx)}
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      answers[currentQuestionIndex] === oIdx ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
                     }`}>
-                    <div className="flex items-center">
-                      {oIdx === reviewQuestions[currentQuestionIndex].question.correctIndex ? (
-                        <FiCheck className="text-green-500 mr-2" />
-                      ) : oIdx === reviewQuestions[currentQuestionIndex].userAnswer ? (
-                        <FiX className="text-red-500 mr-2" />
-                      ) : null}
-                      {typeof opt === "string" ? opt : (opt as any)?.optionText || (opt as any)?.text || (opt as any)?.label || ""}
-                    </div>
+                    {typeof opt === "string" ? opt : (opt as any)?.optionText || (opt as any)?.text || (opt as any)?.label || ""}{" "}
                   </div>
                 ))}
               </div>
-            </div>
+            </motion.div>
+          </AnimatePresence>
 
-            <div className="flex justify-between items-center mt-8">
+          {/* Navigation */}
+          <div className="flex justify-between items-center mt-8">
+            <button
+              onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
+              disabled={currentQuestionIndex === 0}
+              className={`px-4 py-2 rounded-lg ${
+                currentQuestionIndex === 0 ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}>
+              Precedente
+            </button>
+
+            {currentQuestionIndex < selectedQuiz.questions.length - 1 ? (
               <button
-                onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
-                disabled={currentQuestionIndex === 0}
-                className={`px-4 py-2 rounded-lg ${
-                  currentQuestionIndex === 0 ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}>
-                Precedente
+                onClick={() => setCurrentQuestionIndex((prev) => prev + 1)}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                Successiva
               </button>
-
-              {currentQuestionIndex < reviewQuestions.length - 1 ? (
-                <button
-                  onClick={() => setCurrentQuestionIndex((prev) => prev + 1)}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                  Successiva
-                </button>
-              ) : (
-                <button onClick={toggleReview} className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
-                  Torna ai risultati
-                </button>
-              )}
-            </div>
+            ) : (
+              <button
+                onClick={submitQuiz}
+                disabled={answers.every((a) => a === -1)}
+                className={`px-6 py-2 rounded-lg text-white ${
+                  answers.every((a) => a === -1) ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
+                }`}>
+                Completa Quiz
+              </button>
+            )}
           </div>
-        ) : (
-          <div className="p-6">
+
+          {/* Question Indicators */}
+          <div className="flex flex-wrap gap-2 mt-6">
+            {selectedQuiz.questions.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => goToQuestion(idx)}
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                  answers[idx] !== -1 ? "bg-blue-500 text-white" : idx === currentQuestionIndex ? "bg-gray-200" : "bg-gray-100 hover:bg-gray-200"
+                }`}>
+                {idx + 1}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Results Modal */}
+      {score !== null && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-center mb-4">
               <FiAward className="text-3xl text-yellow-500 mr-2" />
               <h3 className="text-2xl font-bold text-gray-800">Quiz Completato!</h3>
@@ -426,11 +319,10 @@ const QuizPage = () => {
 
             <div className="text-center mb-6">
               <div className="text-4xl font-bold mb-2">
-                <span className="text-blue-600">{correctAnswers}</span>
+                <span className="text-blue-600">{score}</span>
                 <span className="text-gray-500">/{selectedQuiz.questions.length}</span>
               </div>
-              <div className="text-xl font-semibold text-green-600 mb-2">Percentuale: {percentage}%</div>
-              <div className="text-gray-600 mb-6">
+              <div className="text-gray-600">
                 {score === selectedQuiz.questions.length
                   ? "Perfetto! 🎉 Hai risposto correttamente a tutte le domande!"
                   : score >= selectedQuiz.questions.length * 0.7
@@ -439,48 +331,27 @@ const QuizPage = () => {
                   ? "Buon inizio! ✨ Continua a esercitarti!"
                   : "Non preoccuparti! 💪 Continua a studiare e riprova!"}
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="text-green-800 font-bold text-xl">{correctAnswers}</div>
-                  <div className="text-green-600">Risposte corrette</div>
-                </div>
-                <div className="bg-red-50 p-4 rounded-lg">
-                  <div className="text-red-800 font-bold text-xl">{wrongAnswers}</div>
-                  <div className="text-red-600">Risposte sbagliate</div>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="text-gray-500 text-sm">Tempo impiegato</div>
+                <div className="font-semibold">
+                  {Math.floor(timeSpent / 60)}m {timeSpent % 60}s
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <div className="text-gray-500 text-sm">Tempo impiegato</div>
-                  <div className="font-semibold">
-                    {Math.floor(timeSpent / 60)}m {timeSpent % 60}s
-                  </div>
-                </div>
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <div className="text-gray-500 text-sm">Percentuale</div>
-                  <div className="font-semibold">{percentage}%</div>
-                </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="text-gray-500 text-sm">Percentuale</div>
+                <div className="font-semibold">{Math.round((score / selectedQuiz.questions.length) * 100)}%</div>
               </div>
             </div>
 
-            <div className="flex flex-col gap-3">
-              {reviewQuestions.length > 0 && (
-                <button
-                  onClick={toggleReview}
-                  className="w-full py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 flex items-center justify-center gap-2">
-                  <FiAlertTriangle />
-                  Rivedi le {reviewQuestions.length} domande sbagliate
-                </button>
-              )}
-              <button onClick={resetQuiz} className="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                Torna alla lista dei quiz
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+            <button onClick={resetQuiz} className="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+              Torna alla lista dei quiz
+            </button>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

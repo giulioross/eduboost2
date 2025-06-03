@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "react-query";
 import { fetchRoutines, addRoutine, deleteRoutine, Routine, StudyBlock } from "../services/api";
 import DatePicker from "react-datepicker";
@@ -7,8 +7,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FiPlus, FiTrash2, FiCalendar, FiList, FiClock } from "react-icons/fi";
 
 type RoutineWithBlocks = Routine & { studyBlocks?: StudyBlock[] };
-const getDayOfWeek = (date: Date): StudyBlock["dayOfWeek"] => {
-  const days: StudyBlock["dayOfWeek"][] = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+
+const getDayOfWeek = (date: Date): string => {
+  const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
   return days[date.getDay()];
 };
 
@@ -26,6 +27,7 @@ const RoutinePage = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [startTime, setStartTime] = useState("");
   const [duration, setDuration] = useState(60);
+  const [subject, setSubject] = useState("General");
   const [points, setPoints] = useState<string[]>([""]);
   const [isDaySelected, setIsDaySelected] = useState(false);
   const queryClient = useQueryClient();
@@ -36,42 +38,52 @@ const RoutinePage = () => {
   const selectedDayOfWeek = selectedDate ? getDayOfWeek(selectedDate) : null;
   const selectedDateISO = selectedDate ? selectedDate.toISOString().slice(0, 10) : null;
 
-  // Mostra routine che hanno uno studyBlock con la data esatta OPPURE con il dayOfWeek selezionato
-  const selectedDayRoutines = routines.filter((routine) =>
-    routine.studyBlocks?.some((block) => {
-      // Normalizza la data del block e la data selezionata a "YYYY-MM-DD"
-      let blockDate: string | null = null;
+  // Miglior matching delle routine per data e giorno della settimana
+  const selectedDayRoutines = routines.filter((routine) => {
+    if (!routine.studyBlocks) return false;
+    return routine.studyBlocks.some((block) => {
+      const dayMatch = block.dayOfWeek === selectedDayOfWeek;
       if (block.date) {
         try {
-          // Se è una stringa ISO, estrai la parte "YYYY-MM-DD"
-          blockDate = new Date(block.date).toISOString().slice(0, 10);
+          const blockDate = new Date(block.date).toISOString().slice(0, 10);
+          return blockDate === selectedDateISO || dayMatch;
         } catch {
-          blockDate = typeof block.date === "string" ? block.date.slice(0, 10) : null;
+          return dayMatch;
         }
       }
-      // Se la routine ha una data esatta, confronta la data
-      if (blockDate && selectedDateISO) {
-        return blockDate === selectedDateISO;
-      }
-      // Altrimenti fallback al dayOfWeek
-      return !blockDate && block.dayOfWeek === selectedDayOfWeek;
-    })
-  );
+      return dayMatch;
+    });
+  });
+
+  // Debug: mostra dati e filtri
+  useEffect(() => {
+    console.log("Routines data:", {
+      allRoutines: routines,
+      selectedDateISO,
+      selectedDayOfWeek,
+      filteredRoutines: selectedDayRoutines,
+    });
+  }, [routines, selectedDateISO, selectedDayOfWeek]);
 
   const createMutation = useMutation(addRoutine, {
-    onSuccess: () => {
-      queryClient.invalidateQueries("routines");
+    onSuccess: (newRoutine) => {
+      // Aggiorna la cache manualmente
+      queryClient.setQueryData<RoutineWithBlocks[]>("routines", (old) => (old ? [...old, newRoutine] : [newRoutine]));
       resetForm();
     },
-    onError: (error) => {
-      console.error("Error creating routine:", error);
-      alert("Failed to create routine");
+    onError: (error: any) => {
+      console.error("Error details:", error.response?.data);
+      alert(`Failed to create routine: ${error.response?.data?.message || error.message}`);
     },
   });
 
   const deleteMutation = useMutation(deleteRoutine, {
     onSuccess: () => {
       queryClient.invalidateQueries("routines");
+    },
+    onError: (error: any) => {
+      console.error("Error deleting routine:", error);
+      alert("Failed to delete routine");
     },
   });
 
@@ -86,9 +98,11 @@ const RoutinePage = () => {
     setDescription("");
     setStartTime("");
     setDuration(60);
+    setSubject("General");
     setPoints([""]);
   };
 
+  // Usa la data ISO completa nel payload
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDate || !startTime) return;
@@ -99,17 +113,21 @@ const RoutinePage = () => {
 
     const dayOfWeek = getDayOfWeek(selectedDate);
     const endTime = calculateEndTime(startTime, duration);
+    const dateISO = selectedDate.toISOString();
 
     const routineData = {
       name,
       description,
       studyBlocks: [
         {
-          subject: "General",
+          subject,
           dayOfWeek,
-          date: selectedDate.toISOString().slice(0, 10), // Salva anche la data esatta!
+          date: dateISO,
           startTime,
           endTime,
+          recommendedMethod: "POMODORO",
+          breakInterval: 25,
+          breakDuration: 5,
         },
       ],
       points: points.filter((p) => p.trim() !== ""),
@@ -118,7 +136,6 @@ const RoutinePage = () => {
     createMutation.mutate(routineData);
   };
 
-  // Gestione punti (steps)
   function addPoint() {
     setPoints((prev) => [...prev, ""]);
   }
@@ -152,6 +169,7 @@ const RoutinePage = () => {
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
                   className="border border-gray-300 rounded px-2 py-1 w-full"
+                  required
                 />
               </div>
               <div>
@@ -162,6 +180,17 @@ const RoutinePage = () => {
                   value={duration}
                   onChange={(e) => setDuration(Number(e.target.value))}
                   className="border border-gray-300 rounded px-2 py-1 w-full"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                <input
+                  type="text"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="border border-gray-300 rounded px-2 py-1 w-full"
+                  required
                 />
               </div>
             </div>
@@ -241,7 +270,10 @@ const RoutinePage = () => {
           {/* Routines List */}
           {isDaySelected && (
             <div>
-              <h3 className="text-xl font-semibold text-gray-700 mb-4">Routines for {selectedDate?.toLocaleDateString()}</h3>
+              <h3 className="text-xl font-semibold text-gray-700 mb-4">
+                Routines for {selectedDate?.toLocaleDateString()}
+                {createMutation.isLoading && <span className="ml-2 text-blue-500">Saving...</span>}
+              </h3>
               {selectedDayRoutines.length === 0 ? (
                 <div className="bg-white rounded-xl shadow-sm p-6 text-center text-gray-500">No routines scheduled for this day</div>
               ) : (
@@ -261,7 +293,7 @@ const RoutinePage = () => {
                               {routine.studyBlocks?.map((block, i) => (
                                 <div key={i} className="flex items-center text-sm text-gray-500 mb-2">
                                   <FiClock className="mr-1" />
-                                  {block.startTime} - {block.endTime}
+                                  {block.startTime} - {block.endTime} ({block.subject})
                                 </div>
                               ))}
                               <p className="text-gray-600 mb-2">{routine.description}</p>

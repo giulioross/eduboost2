@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { FiPlus, FiTrash2, FiCheck, FiX, FiArrowLeft } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 
-// Struttura standardizzata per il frontend
 const emptyQuestion = (): QuizQuestion => ({
   question: "",
   options: ["", "", "", ""],
@@ -74,7 +73,6 @@ const QuizAdminPage = () => {
     setQuestions((prev) => prev.map((q, i) => (i === qIdx ? { ...q, correctIndex: correctIdx } : q)));
   };
 
-  // Salva la struttura compatibile con il backend
   const handleAddQuiz = async () => {
     if (!title.trim()) {
       toast.error("Inserisci un titolo per il quiz");
@@ -88,10 +86,9 @@ const QuizAdminPage = () => {
     setIsSubmitting(true);
 
     try {
-      // Struttura compatibile con il backend
       const quizData = {
         title,
-        quizType: "MULTIPLE_CHOICE",
+        quizType: "MULTIPLE_CHOICE", // o altro tipo se vuoi
         questions: questions.map((q) => ({
           questionText: q.question,
           questionType: "MULTIPLE_CHOICE",
@@ -99,7 +96,6 @@ const QuizAdminPage = () => {
             optionText: opt,
             isCorrect: idx === q.correctIndex,
           })),
-          correctAnswer: q.options[q.correctIndex],
         })),
       };
 
