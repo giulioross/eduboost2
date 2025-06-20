@@ -14,6 +14,7 @@ import FocusHistory from "./pages/FocusHistory";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import { TimerProvider } from "./pages/TimerContext";
+import PDFToolsPage from "./pages/PDFToolsPage";
 
 function App() {
   const location = useLocation();
@@ -63,6 +64,7 @@ function App() {
             <Route path="/focus" element={token ? <FocusModePage /> : <Navigate to="/login" replace />} />
             <Route path="/focus-history" element={token ? <FocusHistory /> : <Navigate to="/login" replace />} />
             <Route path="/profile" element={token ? <ProfilePage /> : <Navigate to="/login" replace />} />
+            <Route path="/pdf-tools" element={<PDFToolsPage />} />
             {/* Catch-all: se non autenticato, vai a login */}
             <Route path="*" element={<Navigate to={token ? "/" : "/login"} replace />} />
           </Routes>

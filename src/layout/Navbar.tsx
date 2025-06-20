@@ -14,6 +14,7 @@ const Navbar: React.FC = () => {
     { name: "Study Routines", path: "/routines", icon: <Calendar size={20} /> },
     { name: "Mental Maps", path: "/mental-maps", icon: <Brain size={20} /> },
     // QUIZ DROPDOWN SPOSTATO SOTTO
+    { name: "PDF Tools", path: "/pdf-tools", icon: <BookOpen size={20} /> }, // <--- AGGIUNGI QUESTA RIGA
     { name: "Focus Mode", path: "/focus", icon: <Zap size={20} /> },
   ];
 
